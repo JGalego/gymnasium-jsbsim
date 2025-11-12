@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import numpy as np
 import random
 import types
@@ -6,12 +6,12 @@ import math
 import enum
 import warnings
 from collections import namedtuple
-import gym_jsbsim.properties as prp
-from gym_jsbsim import assessors, rewards, utils
-from gym_jsbsim.simulation import Simulation
-from gym_jsbsim.properties import BoundedProperty, Property
-from gym_jsbsim.aircraft import Aircraft
-from gym_jsbsim.rewards import RewardStub
+import gymnasium_jsbsim.properties as prp
+from gymnasium_jsbsim import assessors, rewards, utils
+from gymnasium_jsbsim.simulation import Simulation
+from gymnasium_jsbsim.properties import BoundedProperty, Property
+from gymnasium_jsbsim.aircraft import Aircraft
+from gymnasium_jsbsim.rewards import RewardStub
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, Dict, Tuple, NamedTuple, Type
 

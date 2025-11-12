@@ -1,54 +1,55 @@
-# Gym-Jsbsim
+# Gymnasium-JSBSim
 
-Gym-JSBSim provides reinforcement learning environments for the control of fixed-wing aircraft using the JSBSim flight dynamics model. Gym-JSBSim requires a Unix-like OS and Python 3.6.
+Gymnasium-JSBSim provides reinforcement learning environments for the control of fixed-wing aircraft using the JSBSim flight dynamics model.
 
-The package's environments implement the OpenAI Gym interface allowing environments to be created and interacted with in the usual way, e.g.:
+The package's environments implement the OpenAI Gym interface allowing environments to be created and interacted with in the usual way:
 
 ```
-import gym
-import gym_jsbsim
+import gymnasium as gym
+import gymnasium_jsbsim
 
 env = gym.make(ENV_ID)
 env.reset()
 state, reward, done, info = env.step(action)
 ```
 
-Gym-JSBSim optionally provides 3D visualisation of controlled aircraft using the FlightGear simulator.
+Gymnasium-JSBSim optionally provides 3D visualisation of controlled aircraft using the FlightGear simulator.
 
 ## Dependencies
 
 * [JSBSim](https://github.com/JSBSim-Team/jsbsim) flight dynamics model, including the C++ and Python libraries
-* FlightGear simulator (optional for visualisation)
-* gym, numpy, matplotlib
+* gymnasium, numpy, matplotlib
+* (Optional) FlightGear simulator (optional for visualisation)
 
 ## Installation
-Firstly, follow the instructions on the [JSBSim](https://github.com/JSBSim-Team/jsbsim) repository to install JSBSim and its libraries.
+
+Follow the instructions on the [JSBSim](https://github.com/JSBSim-Team/jsbsim) repository to install JSBSim and its libraries.
 
 Confirm that JSBSim is installed from the terminal:
 
 ```
 $ JSBSim --version
-JSBSim Version: 1.0.0 Jul 16 2018 09:14:35
+JSBSim Version: 1.2.3 [GitHub build 1561/commit 570e8115a102df8f877b11e0e59b964ea483e3c0] Jun  7 2025 19:20:54
 ```
 
 and confirm that its Python library is correctly installed from a Python interpreter or IDE:
 
 ```
-import jsbsim
+python -c "import jsbsim"
 ```
 
-Gym-JSBSim is pip installable using its GitHub:
+Gymnasium-JSBSim is `pip`-installable using this repository:
 
 ```
-pip install git+https://github.com/Gor-Ren/gym-jsbsim
+pip install git+https://github.com/JGalego/gymnasium-jsbsim
 ```
 
 ## Environments
 
-Gym-JSBSim implements two tasks for controlling the altitude and heading of aircraft:
+Gymnasium-JSBSim implements two tasks for controlling the altitude and heading of aircraft:
 
-* **HeadingControl**: aircraft must fly in a straight line, maintaining its initial altitude and direction of travel (heading)
-* **TurnHeadingControl**: aircraft must turn to face a random target heading while maintaining their initial altitude
+* **Heading Control**: aircraft must fly in a straight line, maintaining its initial altitude and direction of travel (heading)
+* **Turn Heading Control**: aircraft must turn to face a random target heading while maintaining their initial altitude
 
 The environment can be configured to use one of three aircraft:
 
@@ -56,19 +57,13 @@ The environment can be configured to use one of three aircraft:
 * **F15** fighter jet
 * **A320** airliner
 
+Environment ID strings are constructed as follows `JSBSim-{task}-{aircraft}-SHAPING_STANDARD-NoFG-v0`.
 
-
-Environment ID strings are constructed as follows:
-```
-f'JSBSim-{task}-{aircraft}-SHAPING_STANDARD-NoFG-v0'
-```
-
-For example, to fly a Cessna on the TurnHeadingControl task,
+For example, to fly a Cessna on the Turn Heading Control task,
 
 ```
-env = gym.make('JSBSim-TurnHeadingControl-Cessna172P-SHAPING.STANDARD-NoFG-v0')
+env = gym.make('JSBSim-TurnHeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 ```
-
 
 ## Visualisation
 
@@ -76,24 +71,27 @@ env = gym.make('JSBSim-TurnHeadingControl-Cessna172P-SHAPING.STANDARD-NoFG-v0')
 
 A basic plot of agent actions and current state information can be using `human` render mode by calling `env.render(mode='human')`.
 
-
 ### 3D
 
-3D visualisation requires installation of the FlightGear simulator. Confirm it is runnable from terminal with:
+3D visualisation requires installation of the FlightGear simulator.
+
+Confirm it is runnable from terminal with:
 
 ```
 fgfs --version
 ```
 
-Visualising with FlightGear requires the Gym to be created with a FlightGear-enabled environment ID by changing 'NoFG' -> 'FG'. For example,
+Visualising with FlightGear requires the Gymnasium to be created with a FlightGear-enabled environment ID by changing 'NoFG' -> 'FG'. For example:
+
 ```
 env = gym.make('JSBSim-TurnHeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 ```
-Then, the first call to `env.render(mode='flightgear')` will launch FlightGear and begin visualisation. 
+
+The first call to `env.render(mode='flightgear')` will launch FlightGear and begin visualisation. 
 
 ## State and Action Space
 
-Gym-JSBSim's environments have a continuous state and action space. The state is a 17-tuple:
+Gymnasium-JSBSim's environments have a continuous state and action space. The state is a 17-tuple:
 
 ```
 (name='position/h-sl-ft', description='altitude above mean sea level [ft]', min=-1400, max=85000)
@@ -113,26 +111,17 @@ Gym-JSBSim's environments have a continuous state and action space. The state is
 (name='aero/beta-deg', description='sideslip [deg]', min=-180, max=180)
 (name='error/track-error-deg', description='error to desired track [deg]', min=-180, max=180)
 (name='info/steps_left', description='steps remaining in episode', min=0, max=300)
- ```
- Actions are 3-tuples of floats in the range [-1,+1] describing commands to move the aircraft's control surfaces (ailerons, elevator, rudder):
- ```
- (name='fcs/aileron-cmd-norm', description='aileron commanded position, normalised', min=-1.0, max=1.0)
- (name='fcs/elevator-cmd-norm', description='elevator commanded position, normalised', min=-1.0, max=1.0)
- (name='fcs/rudder-cmd-norm', description='rudder commanded position, normalised', min=-1.0, max=1.0)
- ```
+```
+
+Actions are 3-tuples of floats in the range [-1,+1] describing commands to move the aircraft's control surfaces (ailerons, elevator, rudder):
+```
+(name='fcs/aileron-cmd-norm', description='aileron commanded position, normalised', min=-1.0, max=1.0)
+(name='fcs/elevator-cmd-norm', description='elevator commanded position, normalised', min=-1.0, max=1.0)
+(name='fcs/rudder-cmd-norm', description='rudder commanded position, normalised', min=-1.0, max=1.0)
+```
+
 ## Other Materials
 
-* Gym-JSBSim was created for my MSc dissertation, which can be accessed [here](https://researchportal.bath.ac.uk/en/publications/autonomous-control-of-simulated-fixed-wing-aircraft-using-deep-re). 
+* Gymnasium-JBSim is a fork of [Gor-Ren's Gym-JSBSim](https://github.com/Gor-Ren/gym-jsbsim).
+* Gym-JSBSim was created as part of a MSc dissertation, which can be accessed [here](https://researchportal.bath.ac.uk/en/publications/autonomous-control-of-simulated-fixed-wing-aircraft-using-deep-re). 
 * A video montage of trained agent behaviour is available [here](https://drive.google.com/open?id=1wEq4Fg31Nf_6jb6bLLO24gt15GaZ-wbv).
-* jrjbertram has a fork [here](https://github.com/jrjbertram/jsbsim_rl) with Docker and openAI Baselines integration
-
-## Limitations / FYI
-
-* ~~Limitations in JSBSim restrict you to one JSBSim instance per process. Therefore parallelising Gym JSBSim environments requires you to use multiprocessing, rather than multithreading.~~ [JSBSim removed this limitation](https://github.com/Gor-Ren/gym-jsbsim/issues/5).
-* Gym-JSBSim has some relatively sophisticated reward shaping capabilities. I embarked on reward shaping when my agents weren't learning... turns out I had simply turned off an undocumented but essential flag in my RL agent library's hyperparameters which basically turned off learning. In the end, my results showed that my principled and well-intentioned reward shaping efforts had no improvement over the "STANDARD" reward setting. Such is life :-)
-* The FlightTask classes rely heavily on inheritance and overriding methods for correct behaviour... a "favour composition over inheritance" would have been better. But hey, it was documented.
-* I had to add a voodoo pause to the FlightGear visualisation code, otherwise it could hang during start-up. It's probably pretty brittle as a result.
-
-
-
-

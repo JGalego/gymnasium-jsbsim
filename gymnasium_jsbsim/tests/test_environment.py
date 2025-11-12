@@ -1,13 +1,13 @@
 import unittest
-import gym
+import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
-import gym_jsbsim.properties as prp
-import gym_jsbsim
-from gym_jsbsim import aircraft, tasks, utils
-from gym_jsbsim.environment import JsbSimEnv, NoFGJsbSimEnv
-from gym_jsbsim.tests.stubs import BasicFlightTask
-from gym_jsbsim.visualiser import FlightGearVisualiser
+import gymnasium_jsbsim.properties as prp
+import gymnasium_jsbsim
+from gymnasium_jsbsim import aircraft, tasks, utils
+from gymnasium_jsbsim.environment import JsbSimEnv, NoFGJsbSimEnv
+from gymnasium_jsbsim.tests.stubs import BasicFlightTask
+from gymnasium_jsbsim.visualiser import FlightGearVisualiser
 
 
 class TestJsbSimEnv(unittest.TestCase):
@@ -181,7 +181,7 @@ class TestGymRegistration(unittest.TestCase):
 
     def test_expected_number_of_envs_from_enum(self):
         expected_envs = self.get_number_of_envs()
-        num_envs = len(gym_jsbsim.Envs)
+        num_envs = len(gymnasium_jsbsim.Envs)
 
         self.assertLessEqual(expected_envs, num_envs)
 
@@ -191,7 +191,7 @@ class TestGymRegistration(unittest.TestCase):
             self.assertIsInstance(env, JsbSimEnv)
 
     def test_gym_environment_makeable_by_gym_from_enum(self):
-        for jsb_env_id in gym_jsbsim.Envs:
+        for jsb_env_id in gymnasium_jsbsim.Envs:
             env = gym.make(jsb_env_id.value)
             self.assertIsInstance(env, JsbSimEnv)
 

@@ -1,11 +1,12 @@
 import unittest
 import numpy as np
-import gym
-from gym_jsbsim import utils
-from gym_jsbsim.agents import RandomAgent
-from gym_jsbsim.environment import JsbSimEnv
-from gym_jsbsim.tasks import HeadingControlTask
-import gym_jsbsim.properties as prp
+import gymnasium as gym
+
+from gymnasium_jsbsim import utils
+from gymnasium_jsbsim.agents import RandomAgent
+from gymnasium_jsbsim.environment import JsbSimEnv
+from gymnasium_jsbsim.tasks import HeadingControlTask
+import gymnasium_jsbsim.properties as prp
 
 
 class AgentEnvInteractionTest(unittest.TestCase):

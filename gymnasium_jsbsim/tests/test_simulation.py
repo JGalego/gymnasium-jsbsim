@@ -2,9 +2,9 @@ import unittest
 import jsbsim
 import multiprocessing
 import time
-from gym_jsbsim.simulation import Simulation
-from gym_jsbsim import aircraft
-import gym_jsbsim.properties as prp
+from gymnasium_jsbsim.simulation import Simulation
+from gymnasium_jsbsim import aircraft
+import gymnasium_jsbsim.properties as prp
 
 
 class TestSimulation(unittest.TestCase):

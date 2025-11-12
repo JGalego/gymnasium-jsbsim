@@ -1,8 +1,8 @@
 import warnings
-from gym_jsbsim import utils
+from gymnasium_jsbsim import utils
 from abc import ABC, abstractmethod
 from typing import Iterable, Tuple, Dict
-from gym_jsbsim.rewards import State, Reward, RewardComponent
+from gymnasium_jsbsim.rewards import State, Reward, RewardComponent
 
 
 class Assessor(ABC):

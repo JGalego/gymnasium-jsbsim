@@ -1,5 +1,6 @@
-import gym
+import gymnasium as gym
 import numpy as np
+
 from typing import List
 from abc import ABC, abstractmethod
 

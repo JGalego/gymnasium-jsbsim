@@ -1,0 +1,37 @@
+NOTICE
+======
+
+This project is a derivative work based on Gym-JSBSim by Gor-Ren.
+
+ORIGINAL WORK
+-------------
+Gym-JSBSim
+Copyright (c) 2018 Gor-Ren
+Licensed under the MIT License (see LICENSE.original)
+Original repository: https://github.com/Gor-Ren/gym-jsbsim
+
+DERIVATIVE WORK
+---------------
+Gymnasium-JSBSim
+Copyright (c) 2025 JGalego
+Licensed under the MIT License (see LICENSE.modifications)
+Repository: https://github.com/JGalego/gymnasium-jsbsim
+
+MODIFICATIONS
+-------------
+This derivative work includes major modifications and updates, including but not limited to:
+- Migration from OpenAI Gym to Gymnasium API
+- Updated dependencies and compatibility
+- Additional features and improvements
+
+ATTRIBUTION REQUIREMENTS
+------------------------
+Both the original MIT license (LICENSE.original) and the modifications license 
+(LICENSE) must be included in any distribution of this software 
+or derivative works.
+
+When redistributing this software, you must:
+1. Include LICENSE.original with the original copyright notice
+2. Include LICENSE with the modifications copyright notice
+3. Include this NOTICE file
+4. Provide clear attribution to both Gor-Ren (original) and JGalego (modifications)

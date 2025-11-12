@@ -1,18 +1,18 @@
 import jsbsim
 import os
 import time
-from mpl_toolkits.mplot3d import Axes3D  # req'd for 3d plotting
+
+from mpl_toolkits.mplot3d import Axes3D
 from typing import Dict, Union
-import gym_jsbsim.properties as prp
-from gym_jsbsim.aircraft import Aircraft, cessna172P
+import gymnasium_jsbsim.properties as prp
+from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 
 
 class Simulation(object):
     """
-    A class which wraps an instance of JSBSim and manages communication with it.
+    Wrapper class for JSBSim flight dynamics simulator.
     """
-    encoding = 'utf-8'  # encoding of bytes returned by JSBSim Cython funcs
-    ROOT_DIR = os.path.abspath('/home/gordon/apps/jsbsim')
+    encoding = 'utf-8'  # encoding for strings from JSBSim
     OUTPUT_FILE = 'flightgear.xml'
     LONGITUDINAL = 'longitudinal'
     FULL = 'full'
@@ -20,10 +20,11 @@ class Simulation(object):
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
                  aircraft: Aircraft = cessna172P,
-                 init_conditions: Dict[prp.Property, float] = None,
-                 allow_flightgear_output: bool = True):
+                 init_conditions: Dict[prp.Property, float] = {},
+                 allow_flightgear_output: bool = True,
+                 root_dir: Union[str, None] = None):
         """
-        Constructor. Creates an instance of JSBSim and sets initial conditions.
+        Creates and initialises a JSBSim simulation instance.
 
         :param sim_frequency_hz: the JSBSim integration frequency in Hz.
         :param aircraft_model_name: name of aircraft to be loaded.
@@ -33,7 +34,7 @@ class Simulation(object):
         :param allow_flightgear_output: bool, loads a config file instructing
             JSBSim to connect to an output socket if True.
         """
-        self.jsbsim = jsbsim.FGFDMExec(root_dir=self.ROOT_DIR)
+        self.jsbsim = jsbsim.FGFDMExec(root_dir)
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
             flightgear_output_config = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -47,7 +48,7 @@ class Simulation(object):
 
     def __getitem__(self, prop: Union[prp.BoundedProperty, prp.Property]) -> float:
         """
-        Retrieves specified simulation property.
+        Gets simulation property value.
 
         Properties are identified by strings. A list can be found in the JSBSim
         reference manual, launching JSBSim with '--catalog' command line arg or
@@ -117,7 +118,7 @@ class Simulation(object):
     def initialise(self, dt: float, model_name: str,
                    init_conditions: Dict['prp.Property', float] = None) -> None:
         """
-        Loads an aircraft and initialises simulation conditions.
+        Initialises JSBSim with the specified aircraft and initial conditions.
 
         JSBSim creates an InitialConditions object internally when given an
         XML config file. This method either loads a basic set of ICs, or
@@ -135,7 +136,7 @@ class Simulation(object):
             ic_file = 'basic_ic.xml'
 
         ic_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ic_file)
-        self.jsbsim.load_ic(ic_path, useStoredPath=False)
+        self.jsbsim.load_ic(ic_path, useAircraftPath=False)
         self.load_model(model_name)
         self.jsbsim.set_dt(dt)
         # extract set of legal property names for this aircraft
@@ -156,7 +157,7 @@ class Simulation(object):
 
     def reinitialise(self, init_conditions: Dict['prp.Property', float] = None) -> None:
         """
-        Resets JSBSim to initial conditions.
+        Reinitialises the JSBSim simulation to the initial conditions.
 
         The same aircraft and other settings are kept loaded in JSBSim. If a
         dict of ICs is provided, JSBSim is initialised using these, else the
@@ -170,7 +171,7 @@ class Simulation(object):
 
     def run(self) -> bool:
         """
-        Runs a single timestep in the JSBSim simulation.
+        Advances the simulation by one timestep.
 
         JSBSim monitors the simulation and detects whether it thinks it should
         end, e.g. because a simulation time was specified. False is returned
@@ -184,19 +185,27 @@ class Simulation(object):
         return result
 
     def enable_flightgear_output(self):
+        """
+        Enables output from the FlightGear simulator.
+        """
         self.jsbsim.enable_output()
 
     def disable_flightgear_output(self):
+        """
+        Disables output from the FlightGear simulator.
+        """
         self.jsbsim.disable_output()
 
     def close(self):
-        """ Closes the simulation and any plots. """
+        """
+        Closes the simulation and any plots.
+        """
         if self.jsbsim:
             self.jsbsim = None
 
     def set_simulation_time_factor(self, time_factor):
         """
-        Specifies a factor, relative to realtime, for simulation to run at.
+        Sets the simulation speed relative to realtime.
 
         The simulation runs at realtime for time_factor = 1. It runs at double
         speed for time_factor=2, and half speed for 0.5.
@@ -212,12 +221,14 @@ class Simulation(object):
             self.wall_clock_dt = self.sim_dt / time_factor
 
     def start_engines(self):
-        """ Sets all engines running. """
+        """
+        Starts all aircraft engines.
+        """
         self[prp.all_engine_running] = -1
 
     def set_throttle_mixture_controls(self, throttle_cmd: float, mixture_cmd: float):
         """
-        Sets throttle and mixture settings
+        Sets the throttle and mixture commands for the aircraft.
 
         If an aircraft is multi-engine and has multiple throttle_cmd and mixture_cmd
         controls, sets all of them. Currently only supports up to two throttles/mixtures.
@@ -232,6 +243,8 @@ class Simulation(object):
             pass  # must be single-control aircraft
 
     def raise_landing_gear(self):
-        """ Raises all aircraft landing gear. """
+        """
+        Raises the aircraft landing gear.
+        """
         self[prp.gear] = 0.0
         self[prp.gear_all_cmd] = 0.0

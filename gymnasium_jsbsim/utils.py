@@ -1,7 +1,7 @@
 import functools
 import operator
 from typing import Tuple
-from gym_jsbsim.aircraft import cessna172P, a320, f15
+from gymnasium_jsbsim.aircraft import cessna172P, a320, f15
 from typing import Dict, Iterable
 
 
@@ -11,7 +11,7 @@ class AttributeFormatter(object):
 
     Used through its static method, translate()
     """
-    ILLEGAL_CHARS = '\-/.'
+    ILLEGAL_CHARS = '\\-/.'
     TRANSLATE_TO = '_' * len(ILLEGAL_CHARS)
     TRANSLATION_TABLE = str.maketrans(ILLEGAL_CHARS, TRANSLATE_TO)
 
@@ -39,7 +39,7 @@ def get_env_id(task_type, aircraft, shaping, enable_flightgear) -> str:
 def get_env_id_kwargs_map() -> Dict[str, Tuple]:
     """ Returns all environment IDs mapped to tuple of (task, aircraft, shaping, flightgear) """
     # lazy import to avoid circular dependencies
-    from gym_jsbsim.tasks import Shaping, HeadingControlTask, TurnHeadingControlTask
+    from gymnasium_jsbsim.tasks import Shaping, HeadingControlTask, TurnHeadingControlTask
 
     map = {}
     for task_type in (HeadingControlTask, TurnHeadingControlTask):
