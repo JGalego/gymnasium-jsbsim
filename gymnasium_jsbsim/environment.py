@@ -11,15 +11,14 @@ from typing import Type, Tuple, Dict, Union
 class JsbSimEnv(gym.Env):
     """
     A class wrapping the JSBSim flight dynamics module (FDM) for simulating
-    aircraft as an RL environment conforming to the OpenAI Gym Env
-    interface.
+    aircraft as an RL environment conforming to the Gymnasium Env interface.
 
     An JsbSimEnv is instantiated with a Task that implements a specific
     aircraft control task with its own specific observation/action space and
     variables and agent_reward calculation.
 
-    ATTRIBUTION: this class implements the OpenAI Gym Env API. Method
-    docstrings have been adapted or copied from the OpenAI Gym source code.
+    ATTRIBUTION: this class implements the Gymnasium Env API. Method
+    docstrings have been adapted or copied from the Gymnasium source code.
     """
     JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
     metadata = {'render.modes': ['human', 'flightgear']}

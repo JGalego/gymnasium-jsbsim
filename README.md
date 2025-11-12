@@ -2,7 +2,7 @@
 
 Gymnasium-JSBSim provides reinforcement learning environments for the control of fixed-wing aircraft using the JSBSim flight dynamics model.
 
-The package's environments implement the OpenAI Gym interface allowing environments to be created and interacted with in the usual way:
+The package's environments implement the Gymnasium interface allowing environments to be created and interacted with in the usual way:
 
 ```
 import gymnasium as gym
