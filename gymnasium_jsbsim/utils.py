@@ -1,5 +1,7 @@
 import functools
 import operator
+import shutil
+
 from typing import Tuple
 from gymnasium_jsbsim.aircraft import cessna172P, a320, f15
 from typing import Dict, Iterable
@@ -18,6 +20,11 @@ class AttributeFormatter(object):
     @staticmethod
     def translate(string: str):
         return string.translate(AttributeFormatter.TRANSLATION_TABLE)
+
+
+def is_flightgear_installed() -> bool:
+    """ Returns True if FlightGear is installed on the system else False """
+    return shutil.which('fgfs') is not None
 
 
 def get_env_id(task_type, aircraft, shaping, enable_flightgear) -> str:

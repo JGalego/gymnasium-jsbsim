@@ -7,7 +7,7 @@ import enum
 import warnings
 from collections import namedtuple
 import gymnasium_jsbsim.properties as prp
-from gymnasium_jsbsim import assessors, rewards, utils
+from gymnasium_jsbsim import assessors, rewards, utils, constants
 from gymnasium_jsbsim.simulation import Simulation
 from gymnasium_jsbsim.properties import BoundedProperty, Property
 from gymnasium_jsbsim.aircraft import Aircraft
@@ -92,14 +92,13 @@ class FlightTask(Task, ABC):
         (optional) _new_episode_init(): performs any control input/initialisation on episode reset
         (optional) _update_custom_properties: updates any custom properties in the sim
     """
-    INITIAL_ALTITUDE_FT = 5000
     base_state_variables = (prp.altitude_sl_ft, prp.pitch_rad, prp.roll_rad,
                             prp.u_fps, prp.v_fps, prp.w_fps,
                             prp.p_radps, prp.q_radps, prp.r_radps,
                             prp.aileron_left, prp.aileron_right, prp.elevator,
                             prp.rudder)
     base_initial_conditions = types.MappingProxyType(  # MappingProxyType makes dict immutable
-        {prp.initial_altitude_ft: INITIAL_ALTITUDE_FT,
+        {prp.initial_altitude_ft: constants.INITIAL_ALTITUDE_FT,
          prp.initial_terrain_altitude_ft: 0.00000001,
          prp.initial_longitude_geoc_deg: -2.3273,
          prp.initial_latitude_geod_deg: 51.3781  # corresponds to UoBath
@@ -231,16 +230,6 @@ class HeadingControlTask(FlightTask):
     A task in which the agent must perform steady, level flight maintaining its
     initial heading.
     """
-    THROTTLE_CMD = 0.8
-    MIXTURE_CMD = 0.8
-    INITIAL_HEADING_DEG = 270
-    DEFAULT_EPISODE_TIME_S = 60.
-    ALTITUDE_SCALING_FT = 150
-    TRACK_ERROR_SCALING_DEG = 8
-    ROLL_ERROR_SCALING_RAD = 0.15  # approx. 8 deg
-    SIDESLIP_ERROR_SCALING_DEG = 3.
-    MIN_STATE_QUALITY = 0.0  # terminate if state 'quality' is less than this
-    MAX_ALTITUDE_DEVIATION_FT = 1000  # terminate if altitude error exceeds this
     target_track_deg = BoundedProperty('target/track-deg', 'desired heading [deg]',
                                        prp.heading_deg.min, prp.heading_deg.max)
     track_error_deg = BoundedProperty('error/track-error-deg',
@@ -252,7 +241,7 @@ class HeadingControlTask(FlightTask):
     action_variables = (prp.aileron_cmd, prp.elevator_cmd, prp.rudder_cmd)
 
     def __init__(self, shaping_type: Shaping, step_frequency_hz: float, aircraft: Aircraft,
-                 episode_time_s: float = DEFAULT_EPISODE_TIME_S, positive_rewards: bool = True):
+                 episode_time_s: float = constants.DEFAULT_EPISODE_TIME_S, positive_rewards: bool = True):
         """
         Constructor.
 
@@ -283,13 +272,13 @@ class HeadingControlTask(FlightTask):
                                              state_variables=self.state_variables,
                                              target=0.0,
                                              is_potential_based=False,
-                                             scaling_factor=self.ALTITUDE_SCALING_FT),
+                                             scaling_factor=constants.ALTITUDE_SCALING_FT),
             rewards.AsymptoticErrorComponent(name='travel_direction',
                                              prop=self.track_error_deg,
                                              state_variables=self.state_variables,
                                              target=0.0,
                                              is_potential_based=False,
-                                             scaling_factor=self.TRACK_ERROR_SCALING_DEG),
+                                             scaling_factor=constants.TRACK_ERROR_SCALING_DEG),
             # add an airspeed error relative to cruise speed component?
         )
         return base_components
@@ -306,13 +295,13 @@ class HeadingControlTask(FlightTask):
                                                            state_variables=self.state_variables,
                                                            target=0.0,
                                                            is_potential_based=True,
-                                                           scaling_factor=self.ROLL_ERROR_SCALING_RAD)
+                                                           scaling_factor=constants.ROLL_ERROR_SCALING_RAD)
             no_sideslip = rewards.AsymptoticErrorComponent(name='no_sideslip',
                                                            prop=prp.sideslip_deg,
                                                            state_variables=self.state_variables,
                                                            target=0.0,
                                                            is_potential_based=True,
-                                                           scaling_factor=self.SIDESLIP_ERROR_SCALING_DEG)
+                                                           scaling_factor=constants.SIDESLIP_ERROR_SCALING_DEG)
             potential_based_components = (wings_level, no_sideslip)
 
         if shaping is Shaping.EXTRA:
@@ -334,7 +323,7 @@ class HeadingControlTask(FlightTask):
                             prp.initial_q_radps: 0,
                             prp.initial_r_radps: 0,
                             prp.initial_roc_fpm: 0,
-                            prp.initial_heading_deg: self.INITIAL_HEADING_DEG,
+                            prp.initial_heading_deg: constants.INITIAL_HEADING_DEG,
                             }
         return {**self.base_initial_conditions, **extra_conditions}
 
@@ -363,12 +352,12 @@ class HeadingControlTask(FlightTask):
         # terminate when time >= max, but use math.isclose() for float equality test
         terminal_step = sim[self.steps_left] <= 0
         state_quality = sim[self.last_assessment_reward]
-        state_out_of_bounds = state_quality < self.MIN_STATE_QUALITY  # TODO: issues if sequential?
+        state_out_of_bounds = state_quality < constants.MIN_STATE_QUALITY  # TODO: issues if sequential?
         return terminal_step or state_out_of_bounds or self._altitude_out_of_bounds(sim)
 
     def _altitude_out_of_bounds(self, sim: Simulation) -> bool:
         altitude_error_ft = sim[self.altitude_error_ft]
-        return abs(altitude_error_ft) > self.MAX_ALTITUDE_DEVIATION_FT
+        return abs(altitude_error_ft) > constants.MAX_ALTITUDE_DEVIATION_FT
 
     def _get_out_of_bounds_reward(self, sim: Simulation) -> rewards.Reward:
         """
@@ -387,16 +376,16 @@ class HeadingControlTask(FlightTask):
 
     def _new_episode_init(self, sim: Simulation) -> None:
         super()._new_episode_init(sim)
-        sim.set_throttle_mixture_controls(self.THROTTLE_CMD, self.MIXTURE_CMD)
+        sim.set_throttle_mixture_controls(constants.THROTTLE_CMD, constants.MIXTURE_CMD)
         sim[self.steps_left] = self.steps_left.max
         sim[self.target_track_deg] = self._get_target_track()
 
     def _get_target_track(self) -> float:
         # use the same, initial heading every episode
-        return self.INITIAL_HEADING_DEG
+        return constants.INITIAL_HEADING_DEG
 
     def _get_target_altitude(self) -> float:
-        return self.INITIAL_ALTITUDE_FT
+        return constants.INITIAL_ALTITUDE_FT
 
     def get_props_to_output(self) -> Tuple:
         return (prp.u_fps, prp.altitude_sl_ft, self.altitude_error_ft, self.target_track_deg,

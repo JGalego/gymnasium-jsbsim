@@ -6,6 +6,7 @@ import gymnasium_jsbsim.properties as prp
 
 from gymnasium_jsbsim.aircraft import Aircraft
 from gymnasium_jsbsim.simulation import Simulation
+from gymnasium_jsbsim import constants
 from typing import NamedTuple, Tuple
 
 
@@ -19,17 +20,6 @@ class AxesTuple(NamedTuple):
 
 class FigureVisualiser(object):
     """ Class for manging a matplotlib Figure displaying agent state and actions """
-    PLOT_PAUSE_SECONDS = 0.0001
-    LABEL_TEXT_KWARGS = dict(fontsize=18,
-                             horizontalalignment='right',
-                             verticalalignment='baseline')
-    VALUE_TEXT_KWARGS = dict(fontsize=18,
-                             horizontalalignment='left',
-                             verticalalignment='baseline')
-    TEXT_X_POSN_LABEL = 0.8
-    TEXT_X_POSN_VALUE = 0.9
-    TEXT_Y_POSN_INITIAL = 1.0
-    TEXT_Y_INCREMENT = -0.1
 
     def __init__(self, _: Simulation, print_props: Tuple[prp.Property]):
         """
@@ -62,13 +52,13 @@ class FigureVisualiser(object):
         for subplot in self.axes[1:]:
             # pop and translate all data points
             while subplot.lines:
-                data = subplot.lines.pop()
+                data = subplot.lines[0].remove()
                 del data
 
         self._print_state(sim)
         self._plot_control_states(sim, self.axes)
         self._plot_control_commands(sim, self.axes)
-        plt.pause(self.PLOT_PAUSE_SECONDS)  # voodoo pause needed for figure to update
+        plt.pause(constants.PLOT_PAUSE_SECONDS)  # voodoo pause needed for figure to update
 
     def close(self):
         if self.figure:
@@ -170,24 +160,24 @@ class FigureVisualiser(object):
                       loc='lower center')
 
         plt.show()
-        plt.pause(self.PLOT_PAUSE_SECONDS)  # voodoo pause needed for figure to appear
+        plt.pause(constants.PLOT_PAUSE_SECONDS)  # voodoo pause needed for figure to appear
 
         return figure, all_axes
 
     def _prepare_state_printing(self, ax: plt.Axes):
-        ys = [self.TEXT_Y_POSN_INITIAL + i * self.TEXT_Y_INCREMENT
+        ys = [constants.TEXT_Y_POSN_INITIAL + i * constants.TEXT_Y_INCREMENT
               for i in range(len(self.print_props))]
 
         for prop, y in zip(self.print_props, ys):
             label = str(prop.name)
-            ax.text(self.TEXT_X_POSN_LABEL, y, label, transform=ax.transAxes, **(self.LABEL_TEXT_KWARGS))
+            ax.text(constants.TEXT_X_POSN_LABEL, y, label, transform=ax.transAxes, **constants.LABEL_TEXT_KWARGS)
 
         # print and store empty Text objects which we will rewrite each plot call
         value_texts = []
         dummy_msg = ''
         for y in ys:
-            text = ax.text(self.TEXT_X_POSN_VALUE, y, dummy_msg, transform=ax.transAxes,
-                           **(self.VALUE_TEXT_KWARGS))
+            text = ax.text(constants.TEXT_X_POSN_VALUE, y, dummy_msg, transform=ax.transAxes,
+                           **constants.VALUE_TEXT_KWARGS)
             value_texts.append(text)
         self.value_texts = tuple(value_texts)
 
@@ -230,15 +220,6 @@ class FlightGearVisualiser(object):
     launch. A Figure is also displayed (by creating its own FigureVisualiser)
     which is used to display the agent's actions.
     """
-    TYPE = 'socket'
-    DIRECTION = 'in'
-    RATE = 60
-    SERVER = ''
-    PORT = 5550
-    PROTOCOL = 'udp'
-    LOADED_MESSAGE = 'loading cities done'
-    FLIGHTGEAR_TIME_FACTOR = 1  # sim speed relative to realtime, higher is faster
-    TIME = 'dusk'
 
     def __init__(self, sim: Simulation, print_props: Tuple[prp.Property], block_until_loaded=True):
         """
@@ -267,18 +248,16 @@ class FlightGearVisualiser(object):
     @staticmethod
     def _launch_flightgear(aircraft: Aircraft):
         cmd_line_args = FlightGearVisualiser._create_cmd_line_args(aircraft.flightgear_id)
-        gym.logger.info(f'Subprocess: "{cmd_line_args}"')
         flightgear_process = subprocess.Popen(
             cmd_line_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        gym.logger.info('Started FlightGear')
         return flightgear_process
 
     def configure_simulation_output(self, sim: Simulation):
         sim.enable_flightgear_output()
-        sim.set_simulation_time_factor(self.FLIGHTGEAR_TIME_FACTOR)
+        sim.set_simulation_time_factor(constants.FG_TIME_FACTOR)
 
     @staticmethod
     def _create_cmd_line_args(aircraft_id: str):
@@ -288,16 +267,16 @@ class FlightGearVisualiser(object):
 
         flightgear_cmd = 'fgfs'
         aircraft_arg = f'--aircraft={aircraft_id}'
-        flight_model_arg = '--native-fdm=' + f'{FlightGearVisualiser.TYPE},' \
-                                             f'{FlightGearVisualiser.DIRECTION},' \
-                                             f'{FlightGearVisualiser.RATE},' \
-                                             f'{FlightGearVisualiser.SERVER},' \
-                                             f'{FlightGearVisualiser.PORT},' \
-                                             f'{FlightGearVisualiser.PROTOCOL}'
+        flight_model_arg = '--native-fdm=' + f'{constants.FG_TYPE},' \
+                                             f'{constants.FG_DIRECTION},' \
+                                             f'{constants.FG_RATE},' \
+                                             f'{constants.FG_SERVER},' \
+                                             f'{constants.FG_PORT},' \
+                                             f'{constants.FG_PROTOCOL}'
         flight_model_type_arg = '--fdm=' + 'external'
         disable_ai_arg = '--disable-ai-traffic'
         disable_live_weather_arg = '--disable-real-weather-fetch'
-        time_of_day_arg = '--timeofday=' + FlightGearVisualiser.TIME
+        time_of_day_arg = '--timeofday=' + constants.FG_TIME
         return (flightgear_cmd, aircraft_arg, flight_model_arg,
                 flight_model_type_arg, disable_ai_arg, disable_live_weather_arg,
                 time_of_day_arg)
@@ -305,8 +284,7 @@ class FlightGearVisualiser(object):
     def _block_until_flightgear_loaded(self):
         while True:
             msg_out = self.flightgear_process.stdout.readline().decode()
-            if self.LOADED_MESSAGE in msg_out:
-                gym.logger.info('FlightGear loading complete; entering world')
+            if constants.FG_LOADED_MESSAGE in msg_out:
                 break
             else:
                 time.sleep(0.001)

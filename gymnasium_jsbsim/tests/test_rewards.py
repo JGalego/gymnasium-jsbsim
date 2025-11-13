@@ -1,6 +1,7 @@
 import unittest
 import sys
 from abc import ABC, abstractmethod
+from gymnasium_jsbsim import constants
 from gymnasium_jsbsim.rewards import Reward, AsymptoticErrorComponent, ErrorComponent, \
     LinearErrorComponent, \
     AngularAsymptoticErrorComponent
@@ -153,7 +154,7 @@ class TestAsymptoticErrorComponent(AbstractTestErrorComponent):
         component: AsymptoticErrorComponent = self.get_component_target_constant(
             target_value=target_value, shaping=shaping)
 
-        expected_potential = component.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE
+        expected_potential = constants.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE
         self.assertAlmostEqual(expected_potential, component.get_potential(state, terminal))
 
     def test_calculate_get_potential_terrible_state(self):
@@ -197,7 +198,7 @@ class TestAsymptoticErrorComponent(AbstractTestErrorComponent):
 
         component = self.get_component_target_constant(shaping=True)
 
-        potential_diff = component.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE - self.PERFECT_POTENTIAL
+        potential_diff = constants.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE - self.PERFECT_POTENTIAL
         self.assertAlmostEqual(potential_diff, component.calculate(state, last_state, terminal))
 
     def test_calculate_improved_state_shaping_non_terminal(self):
@@ -260,7 +261,7 @@ class TestLinearShapingComponent(AbstractTestErrorComponent):
 
         component: LinearErrorComponent = self.get_component_target_constant()
 
-        self.assertAlmostEqual(component.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE,
+        self.assertAlmostEqual(constants.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE,
                                component.get_potential(state, terminal))
 
     def test_calculate_get_potential_rubbish_state(self):
@@ -296,7 +297,7 @@ class TestLinearShapingComponent(AbstractTestErrorComponent):
 
         component = self.get_component_target_constant(shaping=True)
 
-        pot_difference = component.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE - self.PERFECT_POTENTIAL
+        pot_difference = constants.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE - self.PERFECT_POTENTIAL
         self.assertAlmostEqual(pot_difference, component.calculate(state, last_state, terminal))
 
     def test_calculate_improved_state_shaping_non_terminal(self):

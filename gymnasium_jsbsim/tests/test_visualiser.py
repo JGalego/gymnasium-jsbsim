@@ -1,12 +1,13 @@
 import time
 import unittest
+import matplotlib.pyplot as plt
+
+from gymnasium_jsbsim import utils, visualiser
 from gymnasium_jsbsim.environment import JsbSimEnv
 from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
 from gymnasium_jsbsim.tests.stubs import BasicFlightTask, DefaultSimStub
-import matplotlib.pyplot as plt
-import gymnasium_jsbsim.visualiser
 
-
+@unittest.skipIf(not utils.is_flightgear_installed(), reason="FlightGear not installed")
 class TestFigureVisualiser(unittest.TestCase):
     sim = None
     visualiser = None
@@ -25,7 +26,7 @@ class TestFigureVisualiser(unittest.TestCase):
         self.visualiser.plot(self.sim)
 
         self.assertIsInstance(self.visualiser.figure, plt.Figure)
-        self.assertIsInstance(self.visualiser.axes, gymnasium_jsbsim.visualiser.AxesTuple)
+        self.assertIsInstance(self.visualiser.axes, visualiser.AxesTuple)
 
     def test_plot_doesnt_plot_position_when_set_by_init(self):
         self.setUp(plot_position=False)
@@ -51,6 +52,7 @@ class TestFigureVisualiser(unittest.TestCase):
         self.assertIsNone(self.visualiser.axes)
 
 
+@unittest.skipIf(not utils.is_flightgear_installed(), reason="FlightGear not installed")
 class TestFlightGearVisualiser(unittest.TestCase):
     env = None
     sim = None

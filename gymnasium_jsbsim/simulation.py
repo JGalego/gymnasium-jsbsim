@@ -6,16 +6,13 @@ from mpl_toolkits.mplot3d import Axes3D
 from typing import Dict, Union
 import gymnasium_jsbsim.properties as prp
 from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
+from gymnasium_jsbsim import constants
 
 
 class Simulation(object):
     """
     Wrapper class for JSBSim flight dynamics simulator.
     """
-    encoding = 'utf-8'  # encoding for strings from JSBSim
-    OUTPUT_FILE = 'flightgear.xml'
-    LONGITUDINAL = 'longitudinal'
-    FULL = 'full'
 
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
@@ -38,7 +35,7 @@ class Simulation(object):
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
             flightgear_output_config = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                    self.OUTPUT_FILE)
+                                                    constants.OUTPUT_FILE)
             self.jsbsim.set_output_directive(flightgear_output_config)
         self.sim_dt = 1.0 / sim_frequency_hz
         self.aircraft = aircraft
@@ -104,7 +101,7 @@ class Simulation(object):
         :return: string, the name of the aircraft model if one is loaded, or
             None if no model is loaded.
         """
-        name: str = self.jsbsim.get_model_name().decode(self.encoding)
+        name: str = self.jsbsim.get_model_name()
         if name:
             return name
         else:

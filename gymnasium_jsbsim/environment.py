@@ -5,8 +5,10 @@ from gymnasium_jsbsim.tasks import Shaping, HeadingControlTask
 from gymnasium_jsbsim.simulation import Simulation
 from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
 from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
+from gymnasium_jsbsim import constants
 from typing import Type, Tuple, Dict, Union
 
+JSBSIM_DT_HZ: int = int(constants.JSBSIM_DT_HZ)  # JSBSim integration frequency
 
 class JsbSimEnv(gym.Env):
     """
@@ -20,7 +22,7 @@ class JsbSimEnv(gym.Env):
     ATTRIBUTION: this class implements the Gymnasium Env API. Method
     docstrings have been adapted or copied from the Gymnasium source code.
     """
-    JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
+
     metadata = {'render.modes': ['human', 'flightgear']}
 
     def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
@@ -36,12 +38,12 @@ class JsbSimEnv(gym.Env):
         :param shaping: a HeadingControlTask.Shaping enum, what type of agent_reward
             shaping to use (see HeadingControlTask for options)
         """
-        if agent_interaction_freq > self.JSBSIM_DT_HZ:
+        if agent_interaction_freq > constants.JSBSIM_DT_HZ:
             raise ValueError('agent interaction frequency must be less than '
                              'or equal to JSBSim integration frequency of '
-                             f'{self.JSBSIM_DT_HZ} Hz.')
+                             f'{constants.JSBSIM_DT_HZ} Hz.')
         self.sim: Simulation = None
-        self.sim_steps_per_agent_step: int = self.JSBSIM_DT_HZ // agent_interaction_freq
+        self.sim_steps_per_agent_step: int = int(constants.JSBSIM_DT_HZ / agent_interaction_freq)
         self.aircraft = aircraft
         self.task = task_type(shaping, agent_interaction_freq, aircraft)
         # set Space objects
@@ -72,7 +74,7 @@ class JsbSimEnv(gym.Env):
         state, reward, done, info = self.task.task_step(self.sim, action, self.sim_steps_per_agent_step)
         return np.array(state), reward, done, info
 
-    def reset(self):
+    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None):
         """
         Resets the state of the environment and returns an initial observation.
 
@@ -82,7 +84,7 @@ class JsbSimEnv(gym.Env):
         if self.sim:
             self.sim.reinitialise(init_conditions)
         else:
-            self.sim = self._init_new_sim(self.JSBSIM_DT_HZ, self.aircraft, init_conditions)
+            self.sim = self._init_new_sim(constants.JSBSIM_DT_HZ, self.aircraft, init_conditions)
 
         state = self.task.observe_first_state(self.sim)
 
@@ -176,9 +178,6 @@ class NoFGJsbSimEnv(JsbSimEnv):
     """
     metadata = {'render.modes': ['human']}
 
-    JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
-    metadata = {'render.modes': ['human', 'flightgear']}
-
     def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
         """
@@ -192,12 +191,12 @@ class NoFGJsbSimEnv(JsbSimEnv):
         :param shaping: a HeadingControlTask.Shaping enum, what type of agent_reward
             shaping to use (see HeadingControlTask for options)
         """
-        if agent_interaction_freq > self.JSBSIM_DT_HZ:
+        if agent_interaction_freq > constants.JSBSIM_DT_HZ:
             raise ValueError('agent interaction frequency must be less than '
                              'or equal to JSBSim integration frequency of '
-                             f'{self.JSBSIM_DT_HZ} Hz.')
+                             f'{constants.JSBSIM_DT_HZ} Hz.')
         self.sim: Simulation = None
-        self.sim_steps_per_agent_step: int = self.JSBSIM_DT_HZ // agent_interaction_freq
+        self.sim_steps_per_agent_step: int = int(constants.JSBSIM_DT_HZ / agent_interaction_freq)
         self.aircraft = aircraft
         self.task = task_type(shaping, agent_interaction_freq, aircraft)
         # set Space objects
@@ -239,7 +238,7 @@ class NoFGJsbSimEnv(JsbSimEnv):
         if self.sim:
             self.sim.reinitialise(init_conditions)
         else:
-            self.sim = self._init_new_sim(self.JSBSIM_DT_HZ, self.aircraft, init_conditions)
+            self.sim = self._init_new_sim(constants.JSBSIM_DT_HZ, self.aircraft, init_conditions)
 
         state = self.task.observe_first_state(self.sim)
 
@@ -262,7 +261,12 @@ class NoFGJsbSimEnv(JsbSimEnv):
         :param flightgear_blocking: waits for FlightGear to load before
             returning if True, else returns immediately
         """
-        if mode == 'flightgear':
+        if mode == 'human':
+            if not self.figure_visualiser:
+                self.figure_visualiser = FigureVisualiser(self.sim,
+                                                          self.task.get_props_to_output())
+            self.figure_visualiser.plot(self.sim)
+        elif mode == 'flightgear':
             raise ValueError('flightgear rendering is disabled for this class')
         else:
             super().render(mode, flightgear_blocking)

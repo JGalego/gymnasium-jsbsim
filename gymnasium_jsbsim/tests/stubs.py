@@ -1,7 +1,7 @@
 import collections
 import copy
 
-from gymnasium_jsbsim import rewards
+from gymnasium_jsbsim import constants, rewards
 from gymnasium_jsbsim.tasks import FlightTask
 from gymnasium_jsbsim.rewards import State, Reward, RewardComponent
 from gymnasium_jsbsim.assessors import Assessor
@@ -144,7 +144,7 @@ class SimStub(object):
         sim[prp.heading_deg] = 270
         sim[prp.v_north_fps] = 0
         sim[prp.v_east_fps] = -200.  # corresp. to travel at track 270 deg
-        sim[prp.altitude_sl_ft] = task.INITIAL_ALTITUDE_FT
+        sim[prp.altitude_sl_ft] = constants.INITIAL_ALTITUDE_FT
         return sim
 
 

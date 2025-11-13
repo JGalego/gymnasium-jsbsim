@@ -2,22 +2,21 @@ import unittest
 import numpy as np
 import gymnasium as gym
 
-from gymnasium_jsbsim import utils
+from gymnasium_jsbsim import constants, utils
 from gymnasium_jsbsim.agents import RandomAgent
 from gymnasium_jsbsim.environment import JsbSimEnv
 from gymnasium_jsbsim.tasks import HeadingControlTask
 import gymnasium_jsbsim.properties as prp
 
-
 class AgentEnvInteractionTest(unittest.TestCase):
     """ Tests for agents interacting with env. """
 
     def init_and_reset_env(self, env: JsbSimEnv):
-        self.assertIsInstance(env.task, HeadingControlTask)
+        self.assertIsInstance(env.unwrapped.task, HeadingControlTask)
 
         # we interact at 5 Hz, so we expect the sim to run 12 timesteps per
-        #   interaction since it runs at 120 Hz
-        self.assertEqual(12, env.sim_steps_per_agent_step)
+        #   interaction since it runs at 60 Hz
+        self.assertEqual(12, env.unwrapped.sim_steps_per_agent_step)
 
         # we init a random agent with a seed
         agent = RandomAgent(action_space=env.action_space)
@@ -38,9 +37,10 @@ class AgentEnvInteractionTest(unittest.TestCase):
 
         # we close the env and JSBSim closes with it
         env.close()
-        self.assertIsNone(env.sim.jsbsim)
+        self.assertIsNone(env.unwrapped.sim.jsbsim)
 
     def take_step_with_random_agent(self, env: JsbSimEnv):
+        # Unwrap the environment to access the underlying JsbSimEnv
         agent = RandomAgent(action_space=env.action_space)
 
         # we set up for a loop through one episode
@@ -54,12 +54,12 @@ class AgentEnvInteractionTest(unittest.TestCase):
         self.assertEqual(first_state.shape, state.shape)
         self.assertTrue(np.any(np.not_equal(first_state, state)),
                         msg='state should have changed after simulation step')
-        expected_time_step_size = env.sim_steps_per_agent_step / env.JSBSIM_DT_HZ
-        self.assertAlmostEqual(expected_time_step_size, env.sim.get_sim_time())
+        expected_time_step_size = env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ
+        self.assertAlmostEqual(expected_time_step_size, env.unwrapped.sim.get_sim_time())
         self.assertFalse(done, msg='episode is terminal after only a single step')
 
         # the aircraft engines are running, as per initial conditions
-        self.assertNotAlmostEqual(env.sim[prp.engine_thrust_lbs], 0)
+        self.assertNotAlmostEqual(env.unwrapped.sim[prp.engine_thrust_lbs], 0)
 
         env.close()
 

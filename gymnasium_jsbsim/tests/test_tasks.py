@@ -3,7 +3,8 @@ import math
 import numpy as np
 import sys
 import gymnasium_jsbsim.properties as prp
-from gymnasium_jsbsim import rewards, utils
+
+from gymnasium_jsbsim import constants, rewards, utils
 from gymnasium_jsbsim.assessors import Assessor, AssessorImpl
 from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 from gymnasium_jsbsim.tasks import Shaping, HeadingControlTask, TurnHeadingControlTask
@@ -85,7 +86,7 @@ class TestHeadingControlTask(unittest.TestCase):
             sim[self.task.steps_left] = self.default_steps_remaining_non_terminal
 
         if altitude_ft is None:
-            sim[prp.altitude_sl_ft] = task.INITIAL_ALTITUDE_FT
+            sim[prp.altitude_sl_ft] = constants.INITIAL_ALTITUDE_FT
         else:
             sim[prp.altitude_sl_ft] = altitude_ft
 
@@ -106,7 +107,7 @@ class TestHeadingControlTask(unittest.TestCase):
         # set properties to reasonable initial episode values
         sim[prp.sim_time_s] = 0.0
         sim[prp.dist_travel_m] = 0.0
-        sim[prp.heading_deg] = task.INITIAL_HEADING_DEG
+        sim[prp.heading_deg] = constants.INITIAL_HEADING_DEG
         sim[prp.altitude_sl_ft] = task.get_initial_conditions()[prp.initial_altitude_ft]
         sim[prp.roll_rad] = 0
         return sim
@@ -148,7 +149,7 @@ class TestHeadingControlTask(unittest.TestCase):
         return TransitioningSimStub(initial_state_sim, next_state_sim)
 
     def get_target_track(self, sim: SimStub):
-        return self.task.INITIAL_HEADING_DEG
+        return constants.INITIAL_HEADING_DEG
 
     def test_init_shaping_standard(self):
         task = self.make_task(shaping_type=Shaping.STANDARD)
@@ -207,8 +208,8 @@ class TestHeadingControlTask(unittest.TestCase):
         _ = self.task.observe_first_state(dummy_sim)
 
         # check engine as expected
-        self.assertAlmostEqual(self.task.THROTTLE_CMD, dummy_sim[prp.throttle_cmd])
-        self.assertAlmostEqual(self.task.MIXTURE_CMD, dummy_sim[prp.mixture_cmd])
+        self.assertAlmostEqual(constants.THROTTLE_CMD, dummy_sim[prp.throttle_cmd])
+        self.assertAlmostEqual(constants.MIXTURE_CMD, dummy_sim[prp.mixture_cmd])
         self.assertAlmostEqual(1.0, dummy_sim[prp.engine_running])
 
     def test_task_step_correct_return_types(self):
@@ -355,7 +356,7 @@ class TestHeadingControlTask(unittest.TestCase):
             self.setUp()
             task = self.make_task(shaping_type=Shaping.STANDARD, positive_rewards=positive_reward)
             perfect_altitude = task._get_target_altitude()
-            middling_track = HeadingControlTask.TRACK_ERROR_SCALING_DEG
+            middling_track = constants.TRACK_ERROR_SCALING_DEG
             sim = self.get_transitioning_sim(task,
                                              steps_terminal=True,
                                              altitude_ft=perfect_altitude,
@@ -379,10 +380,10 @@ class TestHeadingControlTask(unittest.TestCase):
             self.setUp()
             task = self.make_task(shaping_type=Shaping.STANDARD, positive_rewards=positive_reward)
             # we get 0.5 reward at scaling distance from target altitude
-            middling_altitude = task.INITIAL_ALTITUDE_FT + task.ALTITUDE_SCALING_FT
-            middling_track = HeadingControlTask.TRACK_ERROR_SCALING_DEG
-            middling_roll = HeadingControlTask.ROLL_ERROR_SCALING_RAD
-            middling_sideslip = HeadingControlTask.SIDESLIP_ERROR_SCALING_DEG
+            middling_altitude = constants.INITIAL_ALTITUDE_FT + constants.ALTITUDE_SCALING_FT
+            middling_track = constants.TRACK_ERROR_SCALING_DEG
+            middling_roll = constants.ROLL_ERROR_SCALING_RAD
+            middling_sideslip = constants.SIDESLIP_ERROR_SCALING_DEG
             sim = self.get_transitioning_sim(task,
                                              steps_terminal=True,
                                              altitude_ft=middling_altitude,
@@ -421,7 +422,7 @@ class TestHeadingControlTask(unittest.TestCase):
             self.setUp()
             task = self.make_task(shaping_type=Shaping.EXTRA_SEQUENTIAL,
                                   positive_rewards=positive_reward)
-            perfect_alt = task.INITIAL_ALTITUDE_FT
+            perfect_alt = constants.INITIAL_ALTITUDE_FT
             perfect_roll, perfect_sideslip, perfect_track_error = 0., 0., 0.
             sim = self.get_transitioning_sim(task,
                                              steps_terminal=False,
@@ -450,10 +451,10 @@ class TestHeadingControlTask(unittest.TestCase):
             self.setUp()
             task = self.make_task(shaping_type=Shaping.EXTRA_SEQUENTIAL,
                                   positive_rewards=positive_reward)
-            middling_alt = task.INITIAL_ALTITUDE_FT + task.ALTITUDE_SCALING_FT
-            middling_roll = task.ROLL_ERROR_SCALING_RAD
-            middling_sideslip = task.SIDESLIP_ERROR_SCALING_DEG
-            middling_track_error = task.TRACK_ERROR_SCALING_DEG
+            middling_alt = constants.INITIAL_ALTITUDE_FT + constants.ALTITUDE_SCALING_FT
+            middling_roll = constants.ROLL_ERROR_SCALING_RAD
+            middling_sideslip = constants.SIDESLIP_ERROR_SCALING_DEG
+            middling_track_error = constants.TRACK_ERROR_SCALING_DEG
             sim = self.get_transitioning_sim(task,
                                              steps_terminal=False,
                                              altitude_ft=middling_alt,
@@ -485,7 +486,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 self.setUp()
                 task = self.make_task(shaping_type=shaping,
                                       positive_rewards=positive_reward)
-                perfect_alt = task.INITIAL_ALTITUDE_FT
+                perfect_alt = constants.INITIAL_ALTITUDE_FT
                 perfect_roll, perfect_sideslip, perfect_track_error = 0., 0., 0.
                 sim = self.get_transitioning_sim(task,
                                                  steps_terminal=True,

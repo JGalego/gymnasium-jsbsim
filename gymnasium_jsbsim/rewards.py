@@ -2,6 +2,7 @@ import gymnasium_jsbsim.properties as prp
 from abc import ABC, abstractmethod
 from typing import Tuple, Union
 from gymnasium_jsbsim.utils import reduce_reflex_angle_deg
+from gymnasium_jsbsim import constants
 
 State = 'tasks.FlightTask.State'  # alias for type hint
 
@@ -64,7 +65,6 @@ class NormalisedComponent(RewardComponent, ABC):
 
     All potentials of subclasses should be normalised in [0.0, 1.0]
     """
-    POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE = 0.0
 
     def __init__(self,
                  name: str,
@@ -147,7 +147,7 @@ class ErrorComponent(NormalisedComponent, ABC):
         corresponds to zero error, and -1 corresponds to inf error.
         """
         if is_terminal and self.potential_difference_based:
-            return self.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE
+            return constants.POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE
 
         if self.is_constant_target():
             target = self.target
