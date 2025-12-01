@@ -4,13 +4,40 @@ Gymnasium-JSBSim provides reinforcement learning environments for the control of
 
 The package's environments implement the Gymnasium interface allowing environments to be created and interacted with in the usual way:
 
-```
-import gymnasium as gym
-import gymnasium_jsbsim
+```python
+"""
+A simple example of using the Gymnasium-JSBSim environment with a random agent.
+"""
 
-env = gym.make(ENV_ID)
+import gymnasium as gym
+import gymnasium_jsbsim  # pylint: disable=unused-import
+
+# Define the maximum number of steps to run
+MAX_STEPS = 100
+
+# Create the environment
+env = gym.make('JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
+
+# Reset the environment to start
 env.reset()
-state, reward, done, info = env.step(action)
+
+for step in range(MAX_STEPS):
+    # Take a random action (replace with your own policy)
+    action = env.action_space.sample()
+
+    # Step the environment
+    state, reward, terminated, truncated, info = env.step(action)
+
+    # Print the results of the step
+    done = terminated or truncated
+    print(f'Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n')
+
+    # If the episode is done, exit the loop
+    if done:
+        break
+
+# Close the environment
+env.close()
 ```
 
 Gymnasium-JSBSim optionally provides 3D visualisation of controlled aircraft using the FlightGear simulator.
