@@ -7,7 +7,7 @@ name = "gymnasium-jsbsim"
 version = "0.1.0"
 description = "✈️ A reinforcement learning environment for aircraft control using the JSBSim flight dynamics model"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "JGalego"},
     {name = "Gor-Ren"},
@@ -17,7 +17,6 @@ maintainers = [
 ]
 requires-python = ">=3.10"
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3.10",

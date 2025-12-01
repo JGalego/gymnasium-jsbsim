@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install JSBSim dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ python3-dev
+
+    - name: Install JSBSim
+      run: |
+        git clone https://github.com/JSBSim-Team/jsbsim.git
+        cd jsbsim
+        mkdir build && cd build
+        cmake ..
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd ../..
+
+    - name: Install Python JSBSim bindings
+      run: |
+        pip install jsbsim
+
+    - name: Install package dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -e .
+
+    - name: Install dev dependencies
+      run: |
+        pip install -r requirements-dev.txt
+
+    - name: Run tests with pytest
+      run: |
+        pytest gymnasium_jsbsim/tests/ -v --cov=gymnasium_jsbsim --cov-report=xml --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dev dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Run ruff
+      run: |
+        ruff check gymnasium_jsbsim/
+
+    - name: Run black check
+      run: |
+        black --check gymnasium_jsbsim/
+
+    - name: Run isort check
+      run: |
+        isort --check-only --profile black gymnasium_jsbsim/
+
+    - name: Run mypy
+      run: |
+        mypy gymnasium_jsbsim/ --ignore-missing-imports --check-untyped-defs
+      continue-on-error: true  # Don't fail CI on mypy errors initially

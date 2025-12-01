@@ -1,6 +1,7 @@
 """
 Wrapper for JSBSim flight dynamics simulator.
 """
+
 import os
 import time
 from typing import Dict, Union
@@ -8,9 +9,8 @@ from typing import Dict, Union
 import jsbsim
 
 import gymnasium_jsbsim.properties as prp
-
-from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 from gymnasium_jsbsim import constants
+from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 
 
 class Simulation:
@@ -19,12 +19,14 @@ class Simulation:
     """
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def __init__(self,
-                 sim_frequency_hz: float = 60.0,
-                 aircraft: Aircraft = cessna172P,
-                 init_conditions: Dict[prp.Property, float] = None,
-                 allow_flightgear_output: bool = True,
-                 root_dir: Union[str, None] = None):
+    def __init__(
+        self,
+        sim_frequency_hz: float = 60.0,
+        aircraft: Aircraft = cessna172P,
+        init_conditions: Dict[prp.Property, float] = None,
+        allow_flightgear_output: bool = True,
+        root_dir: Union[str, None] = None,
+    ):
         """
         Creates and initialises a JSBSim simulation instance.
 
@@ -43,8 +45,8 @@ class Simulation:
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
             flightgear_output_config = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                constants.OUTPUT_FILE)
+                os.path.dirname(os.path.abspath(__file__)), constants.OUTPUT_FILE
+            )
             self.jsbsim.set_output_directive(flightgear_output_config)
         self.sim_dt = 1.0 / sim_frequency_hz
         self.aircraft = aircraft
@@ -65,7 +67,9 @@ class Simulation:
         """
         return self.jsbsim[prop.name]
 
-    def __setitem__(self, prop: Union[prp.BoundedProperty, prp.Property], value) -> None:
+    def __setitem__(
+        self, prop: Union[prp.BoundedProperty, prp.Property], value
+    ) -> None:
         """
         Sets simulation property to specified value.
 
@@ -94,8 +98,9 @@ class Simulation:
         load_success = self.jsbsim.load_model(model_name)
 
         if not load_success:
-            raise RuntimeError('JSBSim could not find specified model_name: '
-                               + model_name)
+            raise RuntimeError(
+                "JSBSim could not find specified model_name: " + model_name
+            )
 
     def get_aircraft(self) -> Aircraft:
         """
@@ -120,14 +125,18 @@ class Simulation:
     def get_sim_time(self) -> float:
         """
         Gets the simulation time from JSBSim, a float.
-        
+
         Returns:
             Current simulation time in seconds
         """
-        return self.jsbsim['simulation/sim-time-sec']
+        return self.jsbsim["simulation/sim-time-sec"]
 
-    def initialise(self, dt: float, model_name: str,
-                   init_conditions: Dict['prp.Property', float] = None) -> None:
+    def initialise(
+        self,
+        dt: float,
+        model_name: str,
+        init_conditions: Dict["prp.Property", float] = None,
+    ) -> None:
         """
         Initialises JSBSim with the specified aircraft and initial conditions.
 
@@ -143,29 +152,30 @@ class Simulation:
         """
         if init_conditions:
             # if we are specifying conditions, load a minimal file
-            ic_file = 'minimal_ic.xml'
+            ic_file = "minimal_ic.xml"
         else:
-            ic_file = 'basic_ic.xml'
+            ic_file = "basic_ic.xml"
 
         ic_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ic_file)
         self.jsbsim.load_ic(ic_path, useAircraftPath=False)
         self.load_model(model_name)
         self.jsbsim.set_dt(dt)
         # extract set of legal property names for this aircraft
-        # TODO: can translate the.split(" ")[0] once JSBSim bug has been fixed (in progress)
+        # Note: JSBSim property extraction is handled by the underlying library
 
         # now that IC object is created in JSBSim, specify own conditions
         self.set_custom_initial_conditions(init_conditions)
 
         success = self.jsbsim.run_ic()
         if not success:
-            raise RuntimeError('JSBSim failed to init simulation conditions.')
+            raise RuntimeError("JSBSim failed to init simulation conditions.")
 
-    def set_custom_initial_conditions(self,
-                                      init_conditions: Dict['prp.Property', float] = None) -> None:
+    def set_custom_initial_conditions(
+        self, init_conditions: Dict["prp.Property", float] = None
+    ) -> None:
         """
         Set custom initial conditions in the simulation.
-        
+
         Args:
             init_conditions: Dictionary mapping properties to their initial values
         """
@@ -173,7 +183,7 @@ class Simulation:
             for prop, value in init_conditions.items():
                 self[prop] = value
 
-    def reinitialise(self, init_conditions: Dict['prp.Property', float] = None) -> None:
+    def reinitialise(self, init_conditions: Dict["prp.Property", float] = None) -> None:
         """
         Reinitialises the JSBSim simulation to the initial conditions.
 
@@ -234,7 +244,7 @@ class Simulation:
         if time_factor is None:
             self.wall_clock_dt = None
         elif time_factor <= 0:
-            raise ValueError('time factor must be positive and non-zero')
+            raise ValueError("time factor must be positive and non-zero")
         else:
             self.wall_clock_dt = self.sim_dt / time_factor
 

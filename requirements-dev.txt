@@ -1,0 +1,26 @@
+# Development dependencies for gymnasium-jsbsim
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.5.0  # parallel test execution
+
+# Code formatting and linting
+black>=24.10.0
+isort>=5.13.0
+ruff>=0.7.0
+
+# Type checking
+mypy>=1.13.0
+types-setuptools
+
+# Pre-commit hooks
+pre-commit>=3.6.0
+
+# Documentation
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+
+# Code quality tools
+pylint>=3.0.0
+coverage>=7.4.0
