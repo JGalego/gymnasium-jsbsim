@@ -1,3 +1,6 @@
+"""
+Tests for simulation wrapper.
+"""
 import unittest
 import jsbsim
 import multiprocessing
@@ -20,7 +23,7 @@ class TestSimulation(unittest.TestCase):
 
     def test_init_jsbsim(self):
         self.assertIsInstance(self.sim.jsbsim, jsbsim.FGFDMExec,
-                              msg=f'Expected Simulation.jsbsim to hold an '
+                              msg='Expected Simulation.jsbsim to hold an '
                               'instance of JSBSim.')
 
     def test_load_model(self):
@@ -30,7 +33,7 @@ class TestSimulation(unittest.TestCase):
         actual_name = self.sim.get_loaded_model_name()
 
         self.assertEqual(plane.jsbsim_id, actual_name,
-                         msg=f'Unexpected aircraft model name after loading.')
+                         msg='Unexpected aircraft model name after loading.')
 
     def test_load_bad_aircraft_id(self):
         bad_name = 'qwertyuiop'
@@ -40,7 +43,6 @@ class TestSimulation(unittest.TestCase):
             self.sim = None
             self.sim = Simulation(aircraft=bad_aircraft)
 
-    @unittest.expectedFailure  # JSBSim IC property values not persisting after initialization
     def test_get_property(self):
         self.setUp()
         # we expect certain values specified in the IC config XML file

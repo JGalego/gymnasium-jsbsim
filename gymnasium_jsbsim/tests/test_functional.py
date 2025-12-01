@@ -1,8 +1,11 @@
+"""
+Functional integration tests.
+"""
 import unittest
 import numpy as np
 import gymnasium as gym
 
-from gymnasium_jsbsim import constants, utils
+from gymnasium_jsbsim import constants, utils, get_env_id_kwargs_map
 from gymnasium_jsbsim.agents import RandomAgent
 from gymnasium_jsbsim.environment import JsbSimEnv
 from gymnasium_jsbsim.tasks import HeadingControlTask
@@ -32,7 +35,7 @@ class AgentEnvInteractionTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(expect_low, env.action_space.low)
 
         # we reset the env and receive the first state; the env is now ready
-        state = env.reset()
+        state, info = env.reset()
         self.assertEqual(len(env.observation_space.low), len(state))
 
         # we close the env and JSBSim closes with it
@@ -44,11 +47,11 @@ class AgentEnvInteractionTest(unittest.TestCase):
         agent = RandomAgent(action_space=env.action_space)
 
         # we set up for a loop through one episode
-        first_state = env.reset()
+        first_state, _ = env.reset()
 
         # we take a single step
         action = agent.act(first_state)
-        state, reward, done, info = env.step(action)
+        state, _reward, done, _info = env.step(action)
 
         # we see the state has changed
         self.assertEqual(first_state.shape, state.shape)
@@ -64,11 +67,11 @@ class AgentEnvInteractionTest(unittest.TestCase):
         env.close()
 
     def test_init_and_reset_all_envs(self):
-        for env_id in utils.get_env_id_kwargs_map():
+        for env_id in get_env_id_kwargs_map():
             env = gym.make(env_id)
             self.init_and_reset_env(env)
 
     def test_take_step_with_random_agent_all_envs(self):
-        for env_id in utils.get_env_id_kwargs_map():
+        for env_id in get_env_id_kwargs_map():
             env = gym.make(env_id)
             self.take_step_with_random_agent(env)

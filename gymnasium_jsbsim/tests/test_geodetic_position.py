@@ -1,3 +1,6 @@
+"""
+Tests for geodetic position calculations.
+"""
 from gymnasium_jsbsim.properties import GeodeticPosition
 import unittest
 

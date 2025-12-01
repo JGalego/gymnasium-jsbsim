@@ -88,14 +88,14 @@ class AbstractTestErrorComponent(unittest.TestCase, ABC):
 
     @abstractmethod
     def get_class_under_test(self) -> Type[ErrorComponent]:
-        ...
+        """Get the error component class being tested."""
 
     def get_default_perfect_state(self):
-        """ Returns a state where the controlled property matches the target exactly """
+        """Returns a state where the controlled property matches the target exactly."""
         return self.dummy_task.get_state(self.default_target_value, self.default_target_value)
 
     def get_default_middling_state(self):
-        """ Returns a state where the error (value - target) is equal to the scaling factor """
+        """Returns a state where the error (value - target) is equal to the scaling factor."""
         value = self.default_target_value + self.default_scaling_factor
         return self.dummy_task.get_state(value, self.default_target_value)
 

@@ -1,41 +1,50 @@
-import jsbsim
+"""
+Wrapper for JSBSim flight dynamics simulator.
+"""
 import os
 import time
-
-from mpl_toolkits.mplot3d import Axes3D
 from typing import Dict, Union
+
+import jsbsim
+
 import gymnasium_jsbsim.properties as prp
+
 from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 from gymnasium_jsbsim import constants
 
 
-class Simulation(object):
+class Simulation:
     """
     Wrapper class for JSBSim flight dynamics simulator.
     """
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
                  aircraft: Aircraft = cessna172P,
-                 init_conditions: Dict[prp.Property, float] = {},
+                 init_conditions: Dict[prp.Property, float] = None,
                  allow_flightgear_output: bool = True,
                  root_dir: Union[str, None] = None):
         """
         Creates and initialises a JSBSim simulation instance.
 
-        :param sim_frequency_hz: the JSBSim integration frequency in Hz.
-        :param aircraft_model_name: name of aircraft to be loaded.
-            JSBSim looks for file \model_name\model_name.xml from root dir.
-        :param init_conditions: dict mapping properties to their initial values.
-            Defaults to None, causing a default set of initial props to be used.
-        :param allow_flightgear_output: bool, loads a config file instructing
-            JSBSim to connect to an output socket if True.
+        Args:
+            sim_frequency_hz: the JSBSim integration frequency in Hz.
+            aircraft: Aircraft instance to be loaded.
+            init_conditions: dict mapping properties to their initial values.
+                Defaults to None, causing a default set of initial props to be used.
+            allow_flightgear_output: bool, loads a config file instructing
+                JSBSim to connect to an output socket if True.
+            root_dir: JSBSim root directory path
         """
+        if init_conditions is None:
+            init_conditions = {}
         self.jsbsim = jsbsim.FGFDMExec(root_dir)
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
-            flightgear_output_config = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                    constants.OUTPUT_FILE)
+            flightgear_output_config = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                constants.OUTPUT_FILE)
             self.jsbsim.set_output_directive(flightgear_output_config)
         self.sim_dt = 1.0 / sim_frequency_hz
         self.aircraft = aircraft
@@ -98,18 +107,23 @@ class Simulation(object):
         """
         Gets the name of the aircraft model currently loaded in JSBSim.
 
-        :return: string, the name of the aircraft model if one is loaded, or
+        Returns:
+            string, the name of the aircraft model if one is loaded, or
             None if no model is loaded.
         """
         name: str = self.jsbsim.get_model_name()
         if name:
             return name
-        else:
-            # name is empty string, no model is loaded
-            return None
+        # Name is empty string, no model is loaded
+        return None
 
     def get_sim_time(self) -> float:
-        """ Gets the simulation time from JSBSim, a float. """
+        """
+        Gets the simulation time from JSBSim, a float.
+        
+        Returns:
+            Current simulation time in seconds
+        """
         return self.jsbsim['simulation/sim-time-sec']
 
     def initialise(self, dt: float, model_name: str,
@@ -122,11 +136,12 @@ class Simulation(object):
         can be passed a dictionary with ICs. In the latter case a minimal IC
         XML file is loaded, and then the dictionary values are fed in.
 
-        :param dt: float, the JSBSim integration timestep in seconds
-        :param model_name: string, name of aircraft to be loaded
-        :param init_conditions: dict mapping properties to their initial values
+        Args:
+            dt: float, the JSBSim integration timestep in seconds
+            model_name: string, name of aircraft to be loaded
+            init_conditions: dict mapping properties to their initial values
         """
-        if init_conditions is not None:
+        if init_conditions:
             # if we are specifying conditions, load a minimal file
             ic_file = 'minimal_ic.xml'
         else:
@@ -137,7 +152,7 @@ class Simulation(object):
         self.load_model(model_name)
         self.jsbsim.set_dt(dt)
         # extract set of legal property names for this aircraft
-        # TODO: can translate the .split(" ")[0] once JSBSim bug has been fixed (in progress)
+        # TODO: can translate the.split(" ")[0] once JSBSim bug has been fixed (in progress)
 
         # now that IC object is created in JSBSim, specify own conditions
         self.set_custom_initial_conditions(init_conditions)
@@ -148,6 +163,12 @@ class Simulation(object):
 
     def set_custom_initial_conditions(self,
                                       init_conditions: Dict['prp.Property', float] = None) -> None:
+        """
+        Set custom initial conditions in the simulation.
+        
+        Args:
+            init_conditions: Dictionary mapping properties to their initial values
+        """
         if init_conditions is not None:
             for prop, value in init_conditions.items():
                 self[prop] = value

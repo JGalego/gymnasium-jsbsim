@@ -1,10 +1,13 @@
+"""
+Tests for environment implementations.
+"""
 import unittest
 import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
 import gymnasium_jsbsim.properties as prp
 import gymnasium_jsbsim
-from gymnasium_jsbsim import aircraft, tasks, utils
+from gymnasium_jsbsim import aircraft, tasks, utils, get_env_id_kwargs_map
 from gymnasium_jsbsim.environment import JsbSimEnv, NoFGJsbSimEnv
 from gymnasium_jsbsim.tests.stubs import BasicFlightTask
 from gymnasium_jsbsim.visualiser import FlightGearVisualiser
@@ -68,10 +71,9 @@ class TestJsbSimEnv(unittest.TestCase):
         # check low and high values are as expected
         obs_lows = self.env.observation_space.low
         obs_highs = self.env.observation_space.high
-        act_lows = self.env.action_space.low
-        act_highs = self.env.action_space.high
+        # action bounds checked by action space test above
 
-        places_tol = 3
+        _places_tol = 3
 
         for prop, lo, hi in zip(self.env.task.state_variables, obs_lows, obs_highs):
             self.assertAlmostEqual(lo, prop.min, msg=f'{prop} min of {prop.min} does not'
@@ -81,7 +83,7 @@ class TestJsbSimEnv(unittest.TestCase):
 
     def test_reset_env(self):
         self.setUp()
-        obs = self.env.reset()
+        obs, info = self.env.reset()
 
         self.assertValidObservation(obs)
 
@@ -177,7 +179,7 @@ class TestGymRegistration(unittest.TestCase):
 
     def test_expected_number_of_envs_from_helper_function(self):
         expected_envs = self.get_number_of_envs()
-        num_envs = len(utils.get_env_id_kwargs_map())
+        num_envs = len(get_env_id_kwargs_map())
 
         self.assertLessEqual(expected_envs, num_envs)
 
@@ -188,7 +190,7 @@ class TestGymRegistration(unittest.TestCase):
         self.assertLessEqual(expected_envs, num_envs)
 
     def test_gym_environments_makeable_by_gym_from_helper_function(self):
-        for jsb_env_id in utils.get_env_id_kwargs_map():
+        for jsb_env_id in get_env_id_kwargs_map():
             env = gym.make(jsb_env_id)
             self.assertIsInstance(env.unwrapped, JsbSimEnv)
 

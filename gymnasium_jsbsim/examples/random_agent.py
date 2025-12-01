@@ -3,17 +3,30 @@ A simple example of using the Gymnasium-JSBSim environment with a random agent.
 """
 
 import gymnasium as gym
-import gymnasium_jsbsim
+import gymnasium_jsbsim  # pylint: disable=unused-import
 
+# Define the maximum number of steps to run
+MAX_STEPS = 100
+
+# Create the environment
 env = gym.make('JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 
+# Reset the environment to start
 env.reset()
-step = 0
-done = False
-while not done:
-    action = env.action_space.sample()  # random action
-    state, reward, done, info = env.step(action)
-    print(f'Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n')
-    step += 1
 
+for step in range(MAX_STEPS):
+    # Take a random action
+    action = env.action_space.sample()
+
+    # Step the environment
+    state, reward, done, info = env.step(action)
+
+    # Print the results of the step
+    print(f'Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n')
+
+    # If the episode is done, exit the loop
+    if done:
+        break
+
+# Close the environment
 env.close()

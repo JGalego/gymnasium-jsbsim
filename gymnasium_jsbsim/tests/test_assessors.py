@@ -1,3 +1,6 @@
+"""
+Tests for assessor implementations.
+"""
 import unittest
 import collections
 from typing import Type, NamedTuple
@@ -115,7 +118,7 @@ class TestContinuousSequentialAssessor(TestAssessorImpl):
     def test_calculate_with_shaping_components(self):
         for positive_rewards in (True, False):
             num_state_vars = 3
-            DummyState, props = stubs.FlightTaskStub.get_dummy_state_class_and_properties(
+            DummyState, _props = stubs.FlightTaskStub.get_dummy_state_class_and_properties(
                 num_state_vars)
             base_reward = 0
             base_component = stubs.ConstantRewardComponentStub(0)
@@ -168,7 +171,7 @@ class TestContinuousSequentialAssessor(TestAssessorImpl):
         num_state_vars = 3
         terminal = False
 
-        DummyState, props = stubs.FlightTaskStub.get_dummy_state_class_and_properties(
+        DummyState, _props = stubs.FlightTaskStub.get_dummy_state_class_and_properties(
             num_state_vars)
 
         # want base reward to be zero so we can focus on shaped reward

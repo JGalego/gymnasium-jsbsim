@@ -1,31 +1,41 @@
-import gymnasium as gym
-import numpy as np
+"""
+Task definitions for flight control environments.
+
+This module defines abstract and concrete task classes for JSBSim-based
+reinforcement learning environments, including heading control tasks.
+"""
+import enum
+import math
 import random
 import types
-import math
-import enum
 import warnings
-from collections import namedtuple
-import gymnasium_jsbsim.properties as prp
-from gymnasium_jsbsim import assessors, rewards, utils, constants
-from gymnasium_jsbsim.simulation import Simulation
-from gymnasium_jsbsim.properties import BoundedProperty, Property
-from gymnasium_jsbsim.aircraft import Aircraft
-from gymnasium_jsbsim.rewards import RewardStub
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Dict, Tuple, NamedTuple, Type
+from collections import namedtuple
+from typing import Dict, NamedTuple, Optional, Sequence, Tuple, Type
+
+import gymnasium as gym
+import numpy as np
+
+import gymnasium_jsbsim.properties as prp
+from gymnasium_jsbsim import assessors, constants, rewards, utils
+from gymnasium_jsbsim.aircraft import Aircraft
+from gymnasium_jsbsim.properties import BoundedProperty, Property
+from gymnasium_jsbsim.rewards import RewardStub
+from gymnasium_jsbsim.simulation import Simulation
 
 
 class Task(ABC):
     """
     Interface for Tasks, modules implementing specific environments in JSBSim.
 
-    A task defines its own state space, action space, termination conditions and agent_reward function.
+    A task defines its own state space, action space, termination conditions
+    and agent_reward function.
     """
 
     @abstractmethod
-    def task_step(self, sim: Simulation, action: Sequence[float], sim_steps: int) \
-            -> Tuple[np.ndarray, float, bool, Dict]:
+    def task_step(
+        self, sim: Simulation, action: Sequence[float], sim_steps: int
+    ) -> Tuple[np.ndarray, float, bool, Dict]:
         """
         Calculates new state, reward and termination.
 
@@ -40,7 +50,6 @@ class Task(ABC):
             info: dict, optional, containing diagnostic info for debugging etc.
         """
 
-    ...
 
     @abstractmethod
     def observe_first_state(self, sim: Simulation) -> np.ndarray:
@@ -50,7 +59,6 @@ class Task(ABC):
         :param sim: Simulation, the environment simulation
         :return: np array, the first state observation of the episode
         """
-        ...
 
     @abstractmethod
     def get_initial_conditions(self) -> Optional[Dict[Property, float]]:
@@ -67,17 +75,14 @@ class Task(ABC):
         :return: dict mapping string for each initial condition property to
             initial value, a float, or None to use Env defaults
         """
-        ...
 
     @abstractmethod
     def get_state_space(self) -> gym.Space:
         """ Get the task's state Space object """
-        ...
 
     @abstractmethod
     def get_action_space(self) -> gym.Space:
         """ Get the task's action Space object """
-        ...
 
 
 class FlightTask(Task, ABC):
@@ -121,18 +126,18 @@ class FlightTask(Task, ABC):
 
     def _make_state_class(self) -> None:
         """ Creates a namedtuple for readable State data """
-        # get list of state property names, containing legal chars only
+        # Get list of state property names, containing legal chars only
         legal_attribute_names = [prop.get_legal_name() for prop in
                                  self.state_variables]
-        self.State = namedtuple('State', legal_attribute_names)
+        self.State = namedtuple('State', legal_attribute_names)  # pylint: disable=invalid-name
 
     def task_step(self, sim: Simulation, action: Sequence[float], sim_steps: int) \
             -> Tuple[NamedTuple, float, bool, Dict]:
-        # input actions
+        # Input actions
         for prop, command in zip(self.action_variables, action):
             sim[prop] = command
 
-        # run simulation
+        # Run simulation
         for _ in range(sim_steps):
             sim.run()
 
@@ -166,7 +171,6 @@ class FlightTask(Task, ABC):
 
     def _update_custom_properties(self, sim: Simulation) -> None:
         """ Calculates any custom properties which change every timestep. """
-        pass
 
     @abstractmethod
     def _is_terminal(self, sim: Simulation) -> bool:
@@ -175,7 +179,6 @@ class FlightTask(Task, ABC):
         :param sim: the current simulation
         :return: True if the episode should terminate else False
         """
-        ...
 
     @abstractmethod
     def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation) -> bool:
@@ -183,7 +186,6 @@ class FlightTask(Task, ABC):
         Determines whether a custom reward is needed, e.g. because
         a terminal condition is met.
         """
-        ...
 
     def observe_first_state(self, sim: Simulation) -> np.ndarray:
         self._new_episode_init(sim)
@@ -206,7 +208,7 @@ class FlightTask(Task, ABC):
 
     @abstractmethod
     def get_initial_conditions(self) -> Dict[Property, float]:
-        ...
+        """Get initial conditions for the task."""
 
     def get_state_space(self) -> gym.Space:
         state_lows = np.array([state_var.min for state_var in self.state_variables])
@@ -220,6 +222,7 @@ class FlightTask(Task, ABC):
 
 
 class Shaping(enum.Enum):
+    """Reward shaping configuration options."""
     STANDARD = 'STANDARD'
     EXTRA = 'EXTRA'
     EXTRA_SEQUENTIAL = 'EXTRA_SEQUENTIAL'
@@ -240,8 +243,13 @@ class HeadingControlTask(FlightTask):
                                         prp.altitude_sl_ft.max)
     action_variables = (prp.aileron_cmd, prp.elevator_cmd, prp.rudder_cmd)
 
-    def __init__(self, shaping_type: Shaping, step_frequency_hz: float, aircraft: Aircraft,
-                 episode_time_s: float = constants.DEFAULT_EPISODE_TIME_S, positive_rewards: bool = True):
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def __init__(
+        self, shaping_type: Shaping, step_frequency_hz: float,
+        aircraft: Aircraft,
+        episode_time_s: float = constants.DEFAULT_EPISODE_TIME_S,
+        positive_rewards: bool = True
+    ):
         """
         Constructor.
 
@@ -261,6 +269,7 @@ class HeadingControlTask(FlightTask):
         super().__init__(assessor)
 
     def make_assessor(self, shaping: Shaping) -> assessors.AssessorImpl:
+        """Create assessor with base and shaping components based on shaping type."""
         base_components = self._make_base_reward_components()
         shaping_components = ()
         return self._select_assessor(base_components, shaping_components, shaping)
@@ -279,41 +288,53 @@ class HeadingControlTask(FlightTask):
                                              target=0.0,
                                              is_potential_based=False,
                                              scaling_factor=constants.TRACK_ERROR_SCALING_DEG),
-            # add an airspeed error relative to cruise speed component?
+            # Add an airspeed error relative to cruise speed component?
         )
         return base_components
 
     def _select_assessor(self, base_components: Tuple[rewards.RewardComponent, ...],
                          shaping_components: Tuple[rewards.RewardComponent, ...],
                          shaping: Shaping) -> assessors.AssessorImpl:
+        """Select and configure the appropriate assessor based on shaping type."""
         if shaping is Shaping.STANDARD:
-            return assessors.AssessorImpl(base_components, shaping_components,
-                                          positive_rewards=self.positive_rewards)
-        else:
-            wings_level = rewards.AsymptoticErrorComponent(name='wings_level',
-                                                           prop=prp.roll_rad,
-                                                           state_variables=self.state_variables,
-                                                           target=0.0,
-                                                           is_potential_based=True,
-                                                           scaling_factor=constants.ROLL_ERROR_SCALING_RAD)
-            no_sideslip = rewards.AsymptoticErrorComponent(name='no_sideslip',
-                                                           prop=prp.sideslip_deg,
-                                                           state_variables=self.state_variables,
-                                                           target=0.0,
-                                                           is_potential_based=True,
-                                                           scaling_factor=constants.SIDESLIP_ERROR_SCALING_DEG)
-            potential_based_components = (wings_level, no_sideslip)
+            return assessors.AssessorImpl(
+                base_components, shaping_components,
+                positive_rewards=self.positive_rewards
+            )
+
+        wings_level = rewards.AsymptoticErrorComponent(
+            name='wings_level',
+            prop=prp.roll_rad,
+            state_variables=self.state_variables,
+            target=0.0,
+            is_potential_based=True,
+            scaling_factor=constants.ROLL_ERROR_SCALING_RAD
+        )
+        no_sideslip = rewards.AsymptoticErrorComponent(
+            name='no_sideslip',
+            prop=prp.sideslip_deg,
+            state_variables=self.state_variables,
+            target=0.0,
+            is_potential_based=True,
+            scaling_factor=constants.SIDESLIP_ERROR_SCALING_DEG
+        )
+        potential_based_components = (wings_level, no_sideslip)
 
         if shaping is Shaping.EXTRA:
-            return assessors.AssessorImpl(base_components, potential_based_components,
-                                          positive_rewards=self.positive_rewards)
-        elif shaping is Shaping.EXTRA_SEQUENTIAL:
-            altitude_error, travel_direction = base_components
-            # make the wings_level shaping reward dependent on facing the correct direction
+            return assessors.AssessorImpl(
+                base_components, potential_based_components,
+                positive_rewards=self.positive_rewards
+            )
+        if shaping is Shaping.EXTRA_SEQUENTIAL:
+            _altitude_error, travel_direction = base_components
+            # Make the wings_level shaping reward dependent on facing the correct direction
             dependency_map = {wings_level: (travel_direction,)}
-            return assessors.ContinuousSequentialAssessor(base_components, potential_based_components,
-                                                          potential_dependency_map=dependency_map,
-                                                          positive_rewards=self.positive_rewards)
+            return assessors.ContinuousSequentialAssessor(
+                base_components, potential_based_components,
+                potential_dependency_map=dependency_map,
+                positive_rewards=self.positive_rewards
+            )
+        return None  # Should never reach here, but satisfies pylint
 
     def get_initial_conditions(self) -> Dict[Property, float]:
         extra_conditions = {prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
@@ -349,11 +370,13 @@ class HeadingControlTask(FlightTask):
         sim[self.steps_left] -= 1
 
     def _is_terminal(self, sim: Simulation) -> bool:
-        # terminate when time >= max, but use math.isclose() for float equality test
+        # Terminate when time >= max, but use math.isclose() for float equality test
         terminal_step = sim[self.steps_left] <= 0
         state_quality = sim[self.last_assessment_reward]
-        state_out_of_bounds = state_quality < constants.MIN_STATE_QUALITY  # TODO: issues if sequential?
-        return terminal_step or state_out_of_bounds or self._altitude_out_of_bounds(sim)
+        # TODO: issues if sequential?
+        state_out_of_bounds = state_quality < constants.MIN_STATE_QUALITY
+        return (terminal_step or state_out_of_bounds or
+                self._altitude_out_of_bounds(sim))
 
     def _altitude_out_of_bounds(self, sim: Simulation) -> bool:
         altitude_error_ft = sim[self.altitude_error_ft]
@@ -368,11 +391,11 @@ class HeadingControlTask(FlightTask):
         return RewardStub(reward_scalar, reward_scalar)
 
     def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation) -> rewards.Reward:
+        """Override reward on terminal conditions."""
         if self._altitude_out_of_bounds(sim) and not self.positive_rewards:
-            # if using negative rewards, need to give a big negative reward on terminal
+            # If using negative rewards, need to give a big negative reward on terminal
             return self._get_out_of_bounds_reward(sim)
-        else:
-            return reward
+        return reward
 
     def _new_episode_init(self, sim: Simulation) -> None:
         super()._new_episode_init(sim)
@@ -381,16 +404,20 @@ class HeadingControlTask(FlightTask):
         sim[self.target_track_deg] = self._get_target_track()
 
     def _get_target_track(self) -> float:
-        # use the same, initial heading every episode
+        # Use the same, initial heading every episode
         return constants.INITIAL_HEADING_DEG
 
     def _get_target_altitude(self) -> float:
         return constants.INITIAL_ALTITUDE_FT
 
     def get_props_to_output(self) -> Tuple:
-        return (prp.u_fps, prp.altitude_sl_ft, self.altitude_error_ft, self.target_track_deg,
-                self.track_error_deg, prp.roll_rad, prp.sideslip_deg, self.last_agent_reward,
-                self.last_assessment_reward, self.steps_left)
+        """Get properties to output for visualization and monitoring."""
+        return (
+            prp.u_fps, prp.altitude_sl_ft, self.altitude_error_ft,
+            self.target_track_deg, self.track_error_deg, prp.roll_rad,
+            prp.sideslip_deg, self.last_agent_reward,
+            self.last_assessment_reward, self.steps_left
+        )
 
 
 class TurnHeadingControlTask(HeadingControlTask):
@@ -406,6 +433,5 @@ class TurnHeadingControlTask(HeadingControlTask):
         return initial_conditions
 
     def _get_target_track(self) -> float:
-        # select a random heading each episode
-        return random.uniform(self.target_track_deg.min,
-                              self.target_track_deg.max)
+        """Select a random heading for each episode."""
+        return random.uniform(self.target_track_deg.min, self.target_track_deg.max)

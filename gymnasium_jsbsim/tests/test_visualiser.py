@@ -1,3 +1,6 @@
+"""
+Tests for visualization components.
+"""
 import time
 import unittest
 import matplotlib.pyplot as plt
@@ -12,7 +15,7 @@ class TestFigureVisualiser(unittest.TestCase):
     sim = None
     visualiser = None
 
-    def setUp(self, plot_position=True):
+    def setUp(self, _plot_position=True):
         self.sim = DefaultSimStub()
         task = BasicFlightTask()
         self.visualiser = FigureVisualiser(DefaultSimStub(), task.get_props_to_output())
@@ -29,7 +32,7 @@ class TestFigureVisualiser(unittest.TestCase):
         self.assertIsInstance(self.visualiser.axes, visualiser.AxesTuple)
 
     def test_plot_doesnt_plot_position_when_set_by_init(self):
-        self.setUp(plot_position=False)
+        self.setUp(_plot_position=False)
 
         self.visualiser.plot(self.sim)
 

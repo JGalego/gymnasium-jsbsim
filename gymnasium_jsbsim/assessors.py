@@ -1,20 +1,26 @@
+"""
+Assessors for computing rewards from state transitions.
+
+This module provides classes that assess states and compute rewards,
+including support for sequential and dependent reward components.
+"""
 import warnings
-from gymnasium_jsbsim import utils
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple, Dict
-from gymnasium_jsbsim.rewards import State, Reward, RewardComponent
+from typing import Dict, Iterable, Tuple
+
+from gymnasium_jsbsim import utils
+from gymnasium_jsbsim.rewards import Reward, RewardComponent, State
 
 
-class Assessor(ABC):
+class Assessor(ABC):  # pylint: disable=too-few-public-methods
     """ Interface for Assessors which calculate Rewards from States. """
 
     @abstractmethod
     def assess(self, state: State, prev_state: State, is_terminal: bool) -> Reward:
         """ Calculates reward from environment's state, previous state and terminal condition """
-        ...
 
 
-class AssessorImpl(Assessor):
+class AssessorImpl(Assessor):  # pylint: disable=too-few-public-methods
     """
     Determines the Reward from a state transitions.
 
@@ -40,9 +46,9 @@ class AssessorImpl(Assessor):
             raise ValueError('base reward components cannot be empty')
         if any(cmp.is_potential_difference_based() for cmp in self.base_components):
             raise ValueError('base rewards must be non potential based in this implementation')
-            # because of the positive_rewards logic
+            # Because of the positive_rewards logic
         if not all(cmp.is_potential_difference_based() for cmp in self.potential_components):
-            warnings.warn(f'Potential component not is_potential_difference_based()')
+            warnings.warn('Potential component not is_potential_difference_based()')
 
     def assess(self, state: State, prev_state: State, is_terminal: bool) -> Reward:
         """ Calculates a Reward from the state transition. """
@@ -54,8 +60,7 @@ class AssessorImpl(Assessor):
         cmp_values = (cmp.calculate(state, prev_state, is_terminal) for cmp in self.base_components)
         if self.positive_rewards:
             return tuple(cmp_values)
-        else:
-            return tuple(value - 1 for value in cmp_values)
+        return tuple(value - 1 for value in cmp_values)
 
     def _potential_based_rewards(self, state: State, last_state: State, is_terminal: bool) -> Tuple[
         float, ...]:
@@ -63,7 +68,7 @@ class AssessorImpl(Assessor):
             cmp.calculate(state, last_state, is_terminal) for cmp in self.potential_components)
 
 
-class SequentialAssessor(AssessorImpl, ABC):
+class SequentialAssessor(AssessorImpl, ABC):  # pylint: disable=too-few-public-methods
     """
     Abstract class that allows base and potential components to be assigned
     dependencies of other components, such that they are affected by the
@@ -73,11 +78,13 @@ class SequentialAssessor(AssessorImpl, ABC):
     the 'normal' component potentials to account for dependents
     """
 
-    def __init__(self, base_components: Iterable['RewardComponent'],
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def __init__(self,
+                 base_components: Iterable['RewardComponent'],
                  potential_components: Iterable['RewardComponent'] = (),
-                 base_dependency_map: Dict['RewardComponent', Tuple['RewardComponent', ...]] = {},
+                 base_dependency_map: Dict['RewardComponent', Tuple['RewardComponent', ...]] = None,
                  potential_dependency_map: Dict[
-                     'RewardComponent', Tuple['RewardComponent', ...]] = {},
+                     'RewardComponent', Tuple['RewardComponent', ...]] = None,
                  positive_rewards: bool = False):
         """
         :param base_components: RewardComponents from which the non-shaping
@@ -92,8 +99,10 @@ class SequentialAssessor(AssessorImpl, ABC):
             no dependencies
         """
         super().__init__(base_components, potential_components, positive_rewards)
-        self.base_dependency_map = base_dependency_map
-        self.potential_dependency_map = potential_dependency_map
+        self.base_dependency_map = base_dependency_map if base_dependency_map is not None else {}
+        self.potential_dependency_map = (
+            potential_dependency_map if potential_dependency_map is not None else {}
+        )
 
     def _base_rewards(self, state: State, prev_state: State, is_terminal: bool) -> Tuple[
         float, ...]:
@@ -106,9 +115,9 @@ class SequentialAssessor(AssessorImpl, ABC):
         seq_values = (pot * discount for pot, discount in zip(potentials, seq_discounts))
         if self.positive_rewards:
             return tuple(seq_values)
-        else:
-            return tuple(value - 1 for value in seq_values)
+        return tuple(value - 1 for value in seq_values)
 
+    # pylint: disable=arguments-renamed
     def _potential_based_rewards(self, state: State, prev_state: State,
                                  is_terminal: bool) -> Tuple[float, ...]:
         potentials = tuple(cmp.get_potential(state, is_terminal)
@@ -148,10 +157,9 @@ class SequentialAssessor(AssessorImpl, ABC):
         :return: tuple of floats, discount factors in [0,1], corresponding to
             same order as 'components' input
         """
-        ...
 
 
-class ContinuousSequentialAssessor(SequentialAssessor):
+class ContinuousSequentialAssessor(SequentialAssessor):  # pylint: disable=too-few-public-methods
     """
     A sequential assessor in which shaping components with dependents have their potential
     reduced according to their dependent's potentials through multiplication.

@@ -9,8 +9,8 @@ description = "✈️ A reinforcement learning environment for aircraft control 
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Gor-Ren"},
     {name = "JGalego"},
+    {name = "Gor-Ren"},
 ]
 maintainers = [
     {name = "JGalego"},

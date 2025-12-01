@@ -49,16 +49,21 @@ POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE = 0.0
 # ============================================================================
 # FigureVisualiser
 PLOT_PAUSE_SECONDS = 0.0001
-LABEL_TEXT_KWARGS = dict(fontsize=18,
-                         horizontalalignment='right',
-                         verticalalignment='baseline')
-VALUE_TEXT_KWARGS = dict(fontsize=18,
-                        horizontalalignment='left',
-                        verticalalignment='baseline')
+LABEL_TEXT_KWARGS = {
+    "fontsize": 18,
+    "horizontalalignment": 'right',
+    "verticalalignment": 'baseline'
+}
+VALUE_TEXT_KWARGS = {
+    "fontsize": 18,
+    "horizontalalignment": 'left',
+    "verticalalignment": 'baseline'
+}
 TEXT_X_POSN_LABEL = 0.8
 TEXT_X_POSN_VALUE = 0.9
 TEXT_Y_POSN_INITIAL = 1.0
 TEXT_Y_INCREMENT = -0.1
+
 
 # FlightGearVisualiser
 FG_TYPE = 'socket'

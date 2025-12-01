@@ -1,3 +1,6 @@
+"""
+Manual testing utilities.
+"""
 import unittest
 import time
 import gymnasium_jsbsim.properties as prp
@@ -25,7 +28,7 @@ class TestJsbSimInstance(unittest.TestCase):
             self.env.step(action=self.env.action_space.sample())
             print(f'jsbsim {i / 10} s\n')
         toc = time.time()
-        wall_time = (toc - tic)
+        wall_time = toc - tic
         sim_time = self.env.sim.get_sim_time()
         print(f'Simulated {sim_time} s of flight in {wall_time} s')
 
@@ -50,7 +53,7 @@ class TestJsbSimInstance(unittest.TestCase):
         step_number = 0
         while not done:
             action = agent.act(state)
-            state, reward, done, info = self.env.step(action)
+            state, reward, done, _info = self.env.step(action)
             ep_reward += reward
             if step_number % render_every == 0:
                 self.env.render(mode='human')
@@ -69,7 +72,7 @@ class TestJsbSimInstance(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, info = self.env.step(action)
+                state, reward, done, _info = self.env.step(action)
                 ep_reward += reward
                 if step_number % report_every == 0:
                     print(f'time:\t{self.env.sim.get_sim_time()} s')
@@ -103,7 +106,7 @@ class FlightGearRenderTest(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, info = self.env.step(action)
+                state, reward, done, _info = self.env.step(action)
                 ep_reward += reward
                 if step_number % render_every == 0:
                     self.env.render(mode='flightgear')
@@ -114,9 +117,9 @@ class FlightGearRenderTest(unittest.TestCase):
                     print(f'thrust:\t{self.env.sim[prp.engine_thrust_lbs]}')
                     print(f'engine running:\t{self.env.sim[prp.engine_running]}')
                 step_number += 1
-            print(f'***\n'
+            print('***\n'
                   f'EPISODE REWARD: {ep_reward}\n'
-                  f'***')
+                  '***')
 
 
 class TurnHeadingControlTest(unittest.TestCase):
@@ -146,7 +149,7 @@ class TurnHeadingControlTest(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, info = self.env.step(action)
+                state, reward, done, _info = self.env.step(action)
                 ep_reward += reward
                 if step_number % render_every == 0:
                     self.env.render(mode='flightgear')
@@ -162,6 +165,6 @@ class TurnHeadingControlTest(unittest.TestCase):
                     print(f'target heading:\t{self.env.sim[heading_target]}')
                     print('\n')
                 step_number += 1
-            print(f'***\n'
+            print('***\n'
                   f'EPISODE REWARD: {ep_reward}\n'
-                  f'***\n')
+                  '***\n')

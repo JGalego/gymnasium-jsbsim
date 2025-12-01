@@ -1,13 +1,22 @@
-import gymnasium_jsbsim.properties as prp
+"""
+Reward calculation and component classes for reinforcement learning.
+
+This module provides classes for computing rewards in RL environments,
+including support for reward shaping and potential-based rewards.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Tuple, Union
-from gymnasium_jsbsim.utils import reduce_reflex_angle_deg
+
+import gymnasium_jsbsim.properties as prp
+
 from gymnasium_jsbsim import constants
+from gymnasium_jsbsim.utils import reduce_reflex_angle_deg
 
-State = 'tasks.FlightTask.State'  # alias for type hint
+State = 'tasks.FlightTask.State'  # pylint: disable=invalid-name
 
 
-class Reward(object):
+class Reward:
     """
     Immutable class storing an RL reward.
 
@@ -26,7 +35,12 @@ class Reward(object):
             raise ValueError('base agent_reward cannot be empty')
 
     def agent_reward(self) -> float:
-        """ Returns scalar reward value by taking mean of all reward elements """
+        """
+        Returns scalar reward value by taking mean of all reward elements.
+        
+        Returns:
+            Mean of all reward components (base + shaping)
+        """
         sum_reward = sum(self.base_reward_elements) + sum(self.shaping_reward_elements)
         num_reward_components = len(self.base_reward_elements) + len(self.shaping_reward_elements)
         return sum_reward / num_reward_components
@@ -36,27 +50,35 @@ class Reward(object):
         return sum(self.base_reward_elements) / len(self.base_reward_elements)
 
     def is_shaping(self):
+        """
+        Check if this reward includes shaping components.
+        
+        Returns:
+            True if shaping components are present, False otherwise
+        """
         return bool(self.shaping_reward_elements)
 
 
 class RewardComponent(ABC):
-    """ Interface for RewardComponent, an object which calculates one component value of a Reward """
+    """
+    Interface for RewardComponent, an object which calculates one component value of a Reward.
+    """
 
     @abstractmethod
     def calculate(self, state: State, last_state: State, is_terminal: bool) -> float:
-        ...
+        """Calculate the reward component value."""
 
     @abstractmethod
     def get_name(self) -> str:
-        ...
+        """Get the name of this reward component."""
 
     @abstractmethod
     def get_potential(self, state: State, is_terminal) -> float:
-        ...
+        """Get the potential value for the given state."""
 
     @abstractmethod
     def is_potential_difference_based(self) -> bool:
-        ...
+        """Check if this component uses potential-based difference calculation."""
 
 
 class NormalisedComponent(RewardComponent, ABC):
@@ -66,6 +88,7 @@ class NormalisedComponent(RewardComponent, ABC):
     All potentials of subclasses should be normalised in [0.0, 1.0]
     """
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self,
                  name: str,
                  prop: prp.BoundedProperty,
@@ -97,13 +120,14 @@ class NormalisedComponent(RewardComponent, ABC):
         Depending on how target is specified, it may either be a constant, or a
         Property's value that needs to be retrieved from the State.
         """
-        if isinstance(target, float) or isinstance(target, int):
+        if isinstance(target, (float, int)):
             self.constant_target = True
             self.target = target
-        elif isinstance(target, prp.Property) or isinstance(target, prp.BoundedProperty):
+        elif isinstance(target, (prp.Property, prp.BoundedProperty)):
             self.constant_target = False
             self.target_index = state_variables.index(target)
 
+    # pylint: disable=arguments-renamed  # prev_state is clearer than last_state
     def calculate(self, state: State, prev_state: State, is_terminal: bool):
         """
         Calculates the value of this RewardComponent.
@@ -113,13 +137,14 @@ class NormalisedComponent(RewardComponent, ABC):
         value is the potential of state.
         """
         if self.potential_difference_based:
-            # reward is a potential difference of state, prev_state
+            # Reward is a potential difference of state, prev_state
             reward = self.get_potential(state, is_terminal) - self.get_potential(prev_state, False)
         else:
             reward = self.get_potential(state, is_terminal)
         return reward
 
     def is_constant_target(self):
+        """Checks if the target value is a constant."""
         return self.constant_target
 
     def get_name(self) -> str:
@@ -168,7 +193,6 @@ class ErrorComponent(NormalisedComponent, ABC):
         The parameter error_scaling is used to scale for magnitude.
         When absolute_error == error_scaling, the normalised error is equal to 0.5
         """
-        ...
 
 
 class AsymptoticErrorComponent(ErrorComponent):
@@ -178,6 +202,7 @@ class AsymptoticErrorComponent(ErrorComponent):
     to worry about the bounds on the absolute error value.
     """
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self,
                  name: str,
                  prop: prp.BoundedProperty,
@@ -210,6 +235,7 @@ class AngularAsymptoticErrorComponent(AsymptoticErrorComponent):
     (-180, 180] before processing.
     """
 
+    # pylint: disable=arguments-renamed  # angular_error is clearer than absolute_error
     def _normalise_error(self, angular_error: float):
         """
         Given an angle off of a target direction in degrees, calculates a
@@ -232,6 +258,7 @@ class LinearErrorComponent(ErrorComponent):
     interest and its target. The error must be in the interval [0, scaling_factor].
     """
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self,
                  name: str,
                  prop: prp.BoundedProperty,
@@ -263,7 +290,7 @@ def normalise_error_asymptotic(absolute_error: float, scaling_factor: float) -> 
     When absolute_error == scaling_factor, the normalised error is equal to 0.5
     """
     if absolute_error < 0:
-        raise ValueError(f'Error to be normalised must be non-negative '
+        raise ValueError('Error to be normalised must be non-negative '
                          f': {absolute_error}')
     scaled_error = absolute_error / scaling_factor
     return scaled_error / (scaled_error + 1)
@@ -276,20 +303,25 @@ def normalise_error_linear(absolute_error: float, max_error: float) -> float:
     If absolute_error exceeds max_error, it is capped back to max_error
     """
     if absolute_error < 0:
-        raise ValueError(f'Error to be normalised must be non-negative '
+        raise ValueError('Error to be normalised must be non-negative '
                          f': {absolute_error}')
-    elif absolute_error > max_error:
+    if absolute_error > max_error:
         return 1.0
-    else:
-        return absolute_error / max_error
+    return absolute_error / max_error
 
 
 class RewardStub(Reward):
+    """Test stub for Reward class."""
     def __init__(self, agent_reward_value: float, assessment_reward_value: float):
+        # Don't call parent __init__ since stub doesn't use base_reward_elements
+        # pylint: disable=super-init-not-called
         assert isinstance(agent_reward_value, float)
         assert isinstance(assessment_reward_value, float)
         self.agent_reward_value = agent_reward_value
         self.assessment_reward_value = assessment_reward_value
+        # Set these to avoid parent validation
+        self.base_reward_elements = (1.0,)
+        self.shaping_reward_elements = ()
 
     def agent_reward(self) -> float:
         return self.agent_reward_value

@@ -1,16 +1,23 @@
+"""
+Gymnasium environment wrappers for JSBSim flight simulation.
+
+This module provides Env-compliant interfaces to JSBSim for reinforcement
+learning applications, with optional FlightGear visualization support.
+"""
+from typing import Dict, Tuple, Type, Union
+
 import gymnasium as gym
 import numpy as np
 
-from gymnasium_jsbsim.tasks import Shaping, HeadingControlTask
-from gymnasium_jsbsim.simulation import Simulation
-from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
-from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
 from gymnasium_jsbsim import constants
-from typing import Type, Tuple, Dict, Union
+from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
+from gymnasium_jsbsim.simulation import Simulation
+from gymnasium_jsbsim.tasks import HeadingControlTask, Shaping
+from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
 
 JSBSIM_DT_HZ: int = int(constants.JSBSIM_DT_HZ)  # JSBSim integration frequency
 
-class JsbSimEnv(gym.Env):
+class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
     """
     A class wrapping the JSBSim flight dynamics module (FDM) for simulating
     aircraft as an RL environment conforming to the Gymnasium Env interface.
@@ -46,10 +53,10 @@ class JsbSimEnv(gym.Env):
         self.sim_steps_per_agent_step: int = int(constants.JSBSIM_DT_HZ / agent_interaction_freq)
         self.aircraft = aircraft
         self.task = task_type(shaping, agent_interaction_freq, aircraft)
-        # set Space objects
+        # Set Space objects
         self.observation_space: gym.spaces.Box = self.task.get_state_space()
         self.action_space: gym.spaces.Box = self.task.get_action_space()
-        # set visualisation objects
+        # Set visualisation objects
         self.figure_visualiser: FigureVisualiser = None
         self.flightgear_visualiser: FlightGearVisualiser = None
         self.step_delay = None
@@ -68,17 +75,22 @@ class JsbSimEnv(gym.Env):
             done: whether the episode has ended, in which case further step() calls are undefined
             info: auxiliary information, e.g. full reward shaping data
         """
-        if not (action.shape == self.action_space.shape):
+        if not action.shape == self.action_space.shape:
             raise ValueError('mismatch between action and action space size')
 
-        state, reward, done, info = self.task.task_step(self.sim, action, self.sim_steps_per_agent_step)
+        state, reward, done, info = self.task.task_step(
+            self.sim, action, self.sim_steps_per_agent_step
+        )
         return np.array(state), reward, done, info
 
-    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None):
+    # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
+    def reset(
+        self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None
+    ):
         """
-        Resets the state of the environment and returns an initial observation.
+        Resets the environment and returns an initial observation and info.
 
-        :return: array, the initial observation of the space.
+        :return: tuple of (observation, info dict)
         """
         init_conditions = self.task.get_initial_conditions()
         if self.sim:
@@ -91,7 +103,7 @@ class JsbSimEnv(gym.Env):
         if self.flightgear_visualiser:
             self.flightgear_visualiser.configure_simulation_output(self.sim)
 
-        return np.array(state)
+        return np.array(state), {}
 
     def _init_new_sim(self, dt, aircraft, initial_conditions):
         return Simulation(sim_frequency_hz=dt,
@@ -134,7 +146,7 @@ class JsbSimEnv(gym.Env):
                                                                   flightgear_blocking)
             self.flightgear_visualiser.plot(self.sim)
         else:
-            super().render(mode=mode)
+            super().render()
 
     def close(self):
         """ Cleans up this environment's objects
@@ -164,7 +176,6 @@ class JsbSimEnv(gym.Env):
               this won't be true if seed=None, for example.
         """
         gym.logger.warn("Could not seed environment %s", self)
-        return
 
 
 class NoFGJsbSimEnv(JsbSimEnv):
@@ -191,21 +202,7 @@ class NoFGJsbSimEnv(JsbSimEnv):
         :param shaping: a HeadingControlTask.Shaping enum, what type of agent_reward
             shaping to use (see HeadingControlTask for options)
         """
-        if agent_interaction_freq > constants.JSBSIM_DT_HZ:
-            raise ValueError('agent interaction frequency must be less than '
-                             'or equal to JSBSim integration frequency of '
-                             f'{constants.JSBSIM_DT_HZ} Hz.')
-        self.sim: Simulation = None
-        self.sim_steps_per_agent_step: int = int(constants.JSBSIM_DT_HZ / agent_interaction_freq)
-        self.aircraft = aircraft
-        self.task = task_type(shaping, agent_interaction_freq, aircraft)
-        # set Space objects
-        self.observation_space: gym.spaces.Box = self.task.get_state_space()
-        self.action_space: gym.spaces.Box = self.task.get_action_space()
-        # set visualisation objects
-        self.figure_visualiser: FigureVisualiser = None
-        self.flightgear_visualiser: FlightGearVisualiser = None
-        self.step_delay = None
+        super().__init__(task_type, aircraft, agent_interaction_freq, shaping)
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
         """
@@ -222,17 +219,20 @@ class NoFGJsbSimEnv(JsbSimEnv):
             done: whether the episode has ended, in which case further step() calls are undefined
             info: auxiliary information, e.g. full reward shaping data
         """
-        if not (action.shape == self.action_space.shape):
+        if not action.shape == self.action_space.shape:
             raise ValueError('mismatch between action and action space size')
 
-        state, reward, done, info = self.task.task_step(self.sim, action, self.sim_steps_per_agent_step)
+        state, reward, done, info = self.task.task_step(
+            self.sim, action, self.sim_steps_per_agent_step
+        )
         return np.array(state), reward, done, info
 
-    def reset(self, seed: Union[int, None] = None, options: Union[Dict, None] = None):
+    # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
+    def reset(self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None):
         """
-        Resets the state of the environment and returns an initial observation.
+        Resets the environment and returns an initial observation and info.
 
-        :return: array, the initial observation of the space.
+        :return: tuple of (observation, info dict)
         """
         init_conditions = self.task.get_initial_conditions()
         if self.sim:
@@ -245,7 +245,7 @@ class NoFGJsbSimEnv(JsbSimEnv):
         if self.flightgear_visualiser:
             self.flightgear_visualiser.configure_simulation_output(self.sim)
 
-        return np.array(state)
+        return np.array(state), {}
 
     def _init_new_sim(self, dt: float, aircraft: Aircraft, initial_conditions: Dict):
         return Simulation(sim_frequency_hz=dt,
@@ -301,4 +301,3 @@ class NoFGJsbSimEnv(JsbSimEnv):
               this won't be true if seed=None, for example.
         """
         gym.logger.warn("Could not seed environment %s", self)
-        return

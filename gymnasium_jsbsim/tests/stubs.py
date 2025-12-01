@@ -1,3 +1,6 @@
+"""
+Test stubs and fixtures.
+"""
 import collections
 import copy
 
@@ -83,7 +86,7 @@ class BasicFlightTask(FlightTask):
         return False
 
 
-class SimStub(object):
+class SimStub:
     def __init__(self):
         self.data = {}
 
@@ -148,7 +151,7 @@ class SimStub(object):
         return sim
 
 
-class TransitioningSimStub(object):
+class TransitioningSimStub:
     """
     A dummy Simulation object which holds two SimStub states, which it
     transitions between when run() or reset().
@@ -175,7 +178,7 @@ class TransitioningSimStub(object):
         self.current_sim[prp.engine_running] = 1.0
 
 
-class DefaultSimStub(object):
+class DefaultSimStub:
     """
     A stub for a Sim object which never throws KeyErrors when retrieving
     properties; a default value is always returned instead.
@@ -241,8 +244,7 @@ class RewardComponentStub(RewardComponent):
     def get_potential(self, state: State, is_terminal):
         if is_terminal:
             return 0
-        else:
-            return self.state_potentials[state]
+        return self.state_potentials[state]
 
     def get_name(self):
         return str(self)
