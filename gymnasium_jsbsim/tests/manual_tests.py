@@ -38,7 +38,7 @@ class TestJsbSimInstance(unittest.TestCase):
         self.env.reset()
         for i in range(1000):
             action = self.env.action_space.sample()
-            obs, _, _, _ = self.env.step(action=action)
+            obs, _, _, _, _ = self.env.step(action=action)
             if i % render_every == 0:
                 self.env.render(mode='human')
 
@@ -53,7 +53,8 @@ class TestJsbSimInstance(unittest.TestCase):
         step_number = 0
         while not done:
             action = agent.act(state)
-            state, reward, done, _info = self.env.step(action)
+            state, reward, terminated, truncated, _info = self.env.step(action)
+            done = terminated or truncated
             ep_reward += reward
             if step_number % render_every == 0:
                 self.env.render(mode='human')
@@ -72,7 +73,8 @@ class TestJsbSimInstance(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, _info = self.env.step(action)
+                state, reward, terminated, truncated, _info = self.env.step(action)
+                done = terminated or truncated
                 ep_reward += reward
                 if step_number % report_every == 0:
                     print(f'time:\t{self.env.sim.get_sim_time()} s')
@@ -106,7 +108,8 @@ class FlightGearRenderTest(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, _info = self.env.step(action)
+                state, reward, terminated, truncated, _info = self.env.step(action)
+                done = terminated or truncated
                 ep_reward += reward
                 if step_number % render_every == 0:
                     self.env.render(mode='flightgear')
@@ -149,7 +152,8 @@ class TurnHeadingControlTest(unittest.TestCase):
             step_number = 0
             while not done:
                 action = agent.act(state)
-                state, reward, done, _info = self.env.step(action)
+                state, reward, terminated, truncated, _info = self.env.step(action)
+                done = terminated or truncated
                 ep_reward += reward
                 if step_number % render_every == 0:
                     self.env.render(mode='flightgear')

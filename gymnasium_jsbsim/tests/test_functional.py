@@ -51,7 +51,7 @@ class AgentEnvInteractionTest(unittest.TestCase):
 
         # we take a single step
         action = agent.act(first_state)
-        state, _reward, done, _info = env.step(action)
+        state, _reward, terminated, truncated, _info = env.step(action)
 
         # we see the state has changed
         self.assertEqual(first_state.shape, state.shape)
@@ -59,7 +59,7 @@ class AgentEnvInteractionTest(unittest.TestCase):
                         msg='state should have changed after simulation step')
         expected_time_step_size = env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ
         self.assertAlmostEqual(expected_time_step_size, env.unwrapped.sim.get_sim_time())
-        self.assertFalse(done, msg='episode is terminal after only a single step')
+        self.assertFalse(terminated or truncated, msg='episode is terminal after only a single step')
 
         # the aircraft engines are running, as per initial conditions
         self.assertNotAlmostEqual(env.unwrapped.sim[prp.engine_thrust_lbs], 0)

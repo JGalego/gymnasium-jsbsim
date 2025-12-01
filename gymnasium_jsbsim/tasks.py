@@ -35,7 +35,7 @@ class Task(ABC):
     @abstractmethod
     def task_step(
         self, sim: Simulation, action: Sequence[float], sim_steps: int
-    ) -> Tuple[np.ndarray, float, bool, Dict]:
+    ) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """
         Calculates new state, reward and termination.
 
@@ -43,10 +43,11 @@ class Task(ABC):
         :param action: sequence of floats, the agent's last action
         :param sim_steps: number of JSBSim integration steps to perform following action
             prior to making observation
-        :return: tuple of (observation, reward, done, info) where,
+        :return: tuple of (observation, reward, terminated, truncated, info) where,
             observation: array, agent's observation of the environment state
             reward: float, the reward for that step
-            done: bool, True if the episode is over else False
+            terminated: bool, True if the episode reached a terminal state
+            truncated: bool, True if the episode was truncated (e.g., time limit)
             info: dict, optional, containing diagnostic info for debugging etc.
         """
 
@@ -132,7 +133,7 @@ class FlightTask(Task, ABC):
         self.State = namedtuple('State', legal_attribute_names)  # pylint: disable=invalid-name
 
     def task_step(self, sim: Simulation, action: Sequence[float], sim_steps: int) \
-            -> Tuple[NamedTuple, float, bool, Dict]:
+            -> Tuple[NamedTuple, float, bool, bool, Dict]:
         # Input actions
         for prop, command in zip(self.action_variables, action):
             sim[prop] = command
@@ -143,17 +144,19 @@ class FlightTask(Task, ABC):
 
         self._update_custom_properties(sim)
         state = self.State(*(sim[prop] for prop in self.state_variables))
-        done = self._is_terminal(sim)
-        reward = self.assessor.assess(state, self.last_state, done)
-        if done:
+        terminated = self._is_terminal(sim)
+        reward = self.assessor.assess(state, self.last_state, terminated)
+        if terminated:
             reward = self._reward_terminal_override(reward, sim)
         if self.debug:
-            self._validate_state(state, done, action, reward)
+            self._validate_state(state, terminated, action, reward)
         self._store_reward(reward, sim)
         self.last_state = state
         info = {'reward': reward}
+        # For now, we don't distinguish between terminated and truncated
+        truncated = False
 
-        return state, reward.agent_reward(), done, info
+        return state, reward.agent_reward(), terminated, truncated, info
 
     def _validate_state(self, state, done, action, reward):
         if any(math.isnan(el) for el in state):  # float('nan') in state doesn't work!
@@ -213,12 +216,12 @@ class FlightTask(Task, ABC):
     def get_state_space(self) -> gym.Space:
         state_lows = np.array([state_var.min for state_var in self.state_variables])
         state_highs = np.array([state_var.max for state_var in self.state_variables])
-        return gym.spaces.Box(low=state_lows, high=state_highs, dtype='float')
+        return gym.spaces.Box(low=state_lows, high=state_highs, dtype=np.float64)
 
     def get_action_space(self) -> gym.Space:
         action_lows = np.array([act_var.min for act_var in self.action_variables])
         action_highs = np.array([act_var.max for act_var in self.action_variables])
-        return gym.spaces.Box(low=action_lows, high=action_highs, dtype='float')
+        return gym.spaces.Box(low=action_lows, high=action_highs, dtype=np.float64)
 
 
 class Shaping(enum.Enum):

@@ -220,7 +220,8 @@ class TestHeadingControlTask(unittest.TestCase):
         steps = 1
         _ = self.task.observe_first_state(sim)
 
-        state, reward, is_terminal, info = self.task.task_step(sim, self.dummy_action, steps)
+        state, reward, terminated, truncated, info = self.task.task_step(sim, self.dummy_action, steps)
+        is_terminal = terminated or truncated
 
         self.assertIsInstance(state, tuple)
         self.assertEqual(len(state), len(self.task.state_variables))
@@ -234,7 +235,7 @@ class TestHeadingControlTask(unittest.TestCase):
         steps = 1
         _ = self.task.observe_first_state(sim)
 
-        _, reward_scalar, _, info = self.task.task_step(sim, self.dummy_action, steps)
+        _, reward_scalar, _, _, info = self.task.task_step(sim, self.dummy_action, steps)
         reward_object = info['reward']
 
         self.assertIsInstance(reward_object, rewards.Reward)
@@ -246,7 +247,8 @@ class TestHeadingControlTask(unittest.TestCase):
         non_terminal_steps_left = 2
         sim[self.task.steps_left] = non_terminal_steps_left
 
-        _, _, is_terminal, _ = self.task.task_step(sim, self.dummy_action, 1)
+        _, _, terminated, truncated, _ = self.task.task_step(sim, self.dummy_action, 1)
+        is_terminal = terminated or truncated
 
         self.assertFalse(is_terminal)
 
@@ -257,7 +259,8 @@ class TestHeadingControlTask(unittest.TestCase):
         sim[prp.sim_time_s] = terminal_time
         steps = 1
 
-        _, _, is_terminal, _ = self.task.task_step(sim, self.dummy_action, steps)
+        _, _, terminated, truncated, _ = self.task.task_step(sim, self.dummy_action, steps)
+        is_terminal = terminated or truncated
 
         self.assertTrue(is_terminal)
 
@@ -268,7 +271,8 @@ class TestHeadingControlTask(unittest.TestCase):
         sim[prp.sim_time_s] = terminal_time
         steps = 1
 
-        _, _, is_terminal, _ = self.task.task_step(sim, self.dummy_action, steps)
+        _, _, terminated, truncated, _ = self.task.task_step(sim, self.dummy_action, steps)
+        is_terminal = terminated or truncated
 
         self.assertTrue(is_terminal)
 
@@ -285,7 +289,8 @@ class TestHeadingControlTask(unittest.TestCase):
             final_state_sim = self.get_perfect_state_sim(task, time_terminal=True)
             sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
-            state, reward, done, info = task.task_step(sim, self.dummy_action, 1)
+            state, reward, terminated, truncated, info = task.task_step(sim, self.dummy_action, 1)
+            done = terminated or truncated
 
             if positive_reward:
                 expected_reward = self.PERFECT_POSITIVE_REWARD
@@ -303,7 +308,8 @@ class TestHeadingControlTask(unittest.TestCase):
             final_state_sim = self.get_perfect_state_sim(task, time_terminal=False)
             sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
-            state, reward, done, info = task.task_step(sim, self.dummy_action, 1)
+            state, reward, terminated, truncated, info = task.task_step(sim, self.dummy_action, 1)
+            done = terminated or truncated
 
             if positive_reward:
                 expected_reward = self.PERFECT_POSITIVE_REWARD
@@ -321,7 +327,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 final_state_sim = self.get_perfect_state_sim(task, time_terminal=True)
                 sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
-                _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+                _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
                 reward_obj: rewards.Reward = info['reward']
 
                 if positive_reward:
@@ -342,7 +348,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                              track_error_deg=0.,
                                              sideslip_deg=0.)
 
-            _, reward_scalar, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
             reward_obj: rewards.Reward = info['reward']
 
             if positive_reward:
@@ -367,7 +373,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                              track_error_deg=middling_track,
                                              sideslip_deg=0., )
 
-            _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
             reward_obj: rewards.Reward = info['reward']
 
             expected_positive_reward = (self.MIDDLING_POSITIVE_REWARD +
@@ -394,7 +400,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                              track_error_deg=middling_track,
                                              sideslip_deg=middling_sideslip)
 
-            _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
             reward_obj: rewards.Reward = info['reward']
 
             if positive_reward:
@@ -434,7 +440,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                              track_error_deg=perfect_track_error,
                                              sideslip_deg=perfect_sideslip)
 
-            _, reward_scalar, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
             reward_obj: rewards.Reward = info['reward']
 
             expected_shaping_reward = 0  # no improvement (initial state was perfect)
@@ -465,7 +471,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                              track_error_deg=middling_track_error,
                                              sideslip_deg=middling_sideslip)
 
-            _, reward_scalar, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
             reward_obj: rewards.Reward = info['reward']
 
             # 2 base reward components are both middling
@@ -498,7 +504,7 @@ class TestHeadingControlTask(unittest.TestCase):
                                                  track_error_deg=perfect_track_error,
                                                  sideslip_deg=perfect_sideslip)
 
-                _, reward_scalar, _, info = task.task_step(sim, self.dummy_action, 1)
+                _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
                 reward_obj: rewards.Reward = info['reward']
 
                 expected_shaping_reward = -1  # went from perfect (1.) to terminal (0.)

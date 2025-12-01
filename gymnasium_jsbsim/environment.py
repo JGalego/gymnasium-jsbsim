@@ -30,7 +30,7 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
     docstrings have been adapted or copied from the Gymnasium source code.
     """
 
-    metadata = {'render.modes': ['human', 'flightgear']}
+    metadata = {'render_modes': ['human', 'flightgear']}
 
     def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
@@ -61,27 +61,30 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         self.flightgear_visualiser: FlightGearVisualiser = None
         self.step_delay = None
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """
         Run one timestep of the environment's dynamics. When end of
         episode is reached, you are responsible for calling `reset()`
         to reset this environment's state.
-        Accepts an action and returns a tuple (observation, reward, done, info).
+        Accepts an action and returns a tuple (observation, reward, terminated, truncated, info).
 
         :param action: the agent's action, with same length as action variables.
         :return:
             state: agent's observation of the current environment
             reward: amount of reward returned after previous action
-            done: whether the episode has ended, in which case further step() calls are undefined
+            terminated: whether the episode reached a terminal state
+            truncated: whether the episode was truncated (e.g., time limit)
             info: auxiliary information, e.g. full reward shaping data
         """
         if not action.shape == self.action_space.shape:
             raise ValueError('mismatch between action and action space size')
 
-        state, reward, done, info = self.task.task_step(
+        state, reward, terminated, truncated, info = self.task.task_step(
             self.sim, action, self.sim_steps_per_agent_step
         )
-        return np.array(state), reward, done, info
+        obs = np.array(state, dtype=np.float64)
+        obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
+        return obs, reward, terminated, truncated, info
 
     # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
     def reset(
@@ -103,7 +106,9 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         if self.flightgear_visualiser:
             self.flightgear_visualiser.configure_simulation_output(self.sim)
 
-        return np.array(state), {}
+        obs = np.array(state, dtype=np.float64)
+        obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
+        return obs, {}
 
     def _init_new_sim(self, dt, aircraft, initial_conditions):
         return Simulation(sim_frequency_hz=dt,
@@ -187,7 +192,7 @@ class NoFGJsbSimEnv(JsbSimEnv):
     to open a new socket for every single episode, eventually leading to
     failure of the network.
     """
-    metadata = {'render.modes': ['human']}
+    metadata = {'render_modes': ['human']}
 
     def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
@@ -204,28 +209,31 @@ class NoFGJsbSimEnv(JsbSimEnv):
         """
         super().__init__(task_type, aircraft, agent_interaction_freq, shaping)
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """
         Run one timestep of the environment's dynamics. When end of
         episode is reached, you are responsible for calling `reset()`
         to reset this environment's state.
 
-        Accepts an action and returns a tuple (observation, reward, done, info).
+        Accepts an action and returns a tuple (observation, reward, terminated, truncated, info).
 
         :param action: the agent's action, with same length as action variables.
         :return:
             state: agent's observation of the current environment
             reward: amount of reward returned after previous action
-            done: whether the episode has ended, in which case further step() calls are undefined
+            terminated: whether the episode reached a terminal state
+            truncated: whether the episode was truncated (e.g., time limit)
             info: auxiliary information, e.g. full reward shaping data
         """
         if not action.shape == self.action_space.shape:
             raise ValueError('mismatch between action and action space size')
 
-        state, reward, done, info = self.task.task_step(
+        state, reward, terminated, truncated, info = self.task.task_step(
             self.sim, action, self.sim_steps_per_agent_step
         )
-        return np.array(state), reward, done, info
+        obs = np.array(state, dtype=np.float64)
+        obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
+        return obs, reward, terminated, truncated, info
 
     # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
     def reset(self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None):
@@ -245,7 +253,9 @@ class NoFGJsbSimEnv(JsbSimEnv):
         if self.flightgear_visualiser:
             self.flightgear_visualiser.configure_simulation_output(self.sim)
 
-        return np.array(state), {}
+        obs = np.array(state, dtype=np.float64)
+        obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
+        return obs, {}
 
     def _init_new_sim(self, dt: float, aircraft: Aircraft, initial_conditions: Dict):
         return Simulation(sim_frequency_hz=dt,

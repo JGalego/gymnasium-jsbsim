@@ -19,9 +19,10 @@ for step in range(MAX_STEPS):
     action = env.action_space.sample()
 
     # Step the environment
-    state, reward, done, info = env.step(action)
+    state, reward, terminated, truncated, info = env.step(action)
 
     # Print the results of the step
+    done = terminated or truncated
     print(f'Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n')
 
     # If the episode is done, exit the loop

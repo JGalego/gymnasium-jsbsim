@@ -93,19 +93,19 @@ class TestJsbSimEnv(unittest.TestCase):
         action2 = np.linspace(-0.5, .5, num=len(self.env.task.action_variables))
 
         # do an action and check results
-        obs, _, _, _ = self.env.step(action1)
+        obs, _, _, _, _ = self.env.step(action1)
         self.assertValidObservation(obs)
         self.validate_action_made(action1)
 
         # repeat action several times
-        for _ in range(10):
-            obs, _, _, _ = self.env.step(action1)
+        for _ in range(3):
+            obs, _, _, _, _ = self.env.step(action1)
             self.assertValidObservation(obs)
             self.validate_action_made(action1)
 
         # repeat new action
-        for _ in range(10):
-            obs, _, _, _ = self.env.step(action2)
+        for _ in range(3):
+            obs, _, _, _, _ = self.env.step(action2)
             self.assertValidObservation(obs)
             self.validate_action_made(action2)
 
@@ -124,7 +124,7 @@ class TestJsbSimEnv(unittest.TestCase):
         action = np.array([0.0] * len(self.env.task.action_variables))
         # repeat action several times
         for _ in range(3):
-            obs, _, _, _ = self.env.step(action)
+            obs, _, _, _, _ = self.env.step(action)
             self.env.render(mode='human')
 
     def test_plot_actions(self):
@@ -133,9 +133,9 @@ class TestJsbSimEnv(unittest.TestCase):
         self.env.render(mode='human')
 
         # repeat action several times
-        for _ in range(3):
+        for _ in range(100):
             action = self.env.action_space.sample()
-            _, _, _, _ = self.env.step(action)
+            _, _, _, _, _ = self.env.step(action)
             self.env.render(mode='human')
 
     def test_asl_agl_elevations_equal(self):
