@@ -88,7 +88,7 @@ class AbstractTestErrorComponent(unittest.TestCase, ABC):
     default_scaling_factor = 1
     default_shaping = True
     default_name = "test_component"
-    extra_kwargs = dict()
+    extra_kwargs: dict = dict()
 
     def setUp(self):
         self.COT = self.get_class_under_test()
@@ -139,7 +139,7 @@ class AbstractTestErrorComponent(unittest.TestCase, ABC):
         shaping=default_shaping,
         scaling_factor=default_scaling_factor,
     ):
-        return self.COT(
+        return self.COT(  # type: ignore[call-arg]
             name,
             state_vars[property_index],
             state_vars,

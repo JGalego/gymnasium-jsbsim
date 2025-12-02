@@ -94,5 +94,5 @@ jobs:
 
     - name: Run mypy
       run: |
-        mypy gymnasium_jsbsim/ --ignore-missing-imports --check-untyped-defs --exclude tests/
-      continue-on-error: true  # Don't fail CI on mypy errors initially
+        mypy gymnasium_jsbsim/ --ignore-missing-imports --check-untyped-defs
+      continue-on-error: false

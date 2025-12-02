@@ -5,13 +5,12 @@ Tests for task implementations.
 import math
 import sys
 import unittest
-
-import numpy as np
+from typing import Optional
 
 import gymnasium_jsbsim.properties as prp
 from gymnasium_jsbsim import constants, rewards, utils
 from gymnasium_jsbsim.aircraft import Aircraft, cessna172P
-from gymnasium_jsbsim.assessors import Assessor
+from gymnasium_jsbsim.assessors import Assessor, AssessorImpl
 from gymnasium_jsbsim.tasks import HeadingControlTask, Shaping, TurnHeadingControlTask
 from gymnasium_jsbsim.tests.stubs import SimStub, TransitioningSimStub
 
@@ -35,9 +34,7 @@ class TestHeadingControlTask(unittest.TestCase):
             sim
         )  # causes task to init new-episode attributes
 
-        self.dummy_action = np.asarray(
-            [0 for _ in range(len(self.task.action_variables))]
-        )
+        self.dummy_action = [0.0 for _ in range(len(self.task.action_variables))]
 
     def get_class_under_test(self):
         return HeadingControlTask
@@ -61,7 +58,7 @@ class TestHeadingControlTask(unittest.TestCase):
 
     def get_initial_sim_with_state(
         self,
-        task: HeadingControlTask = None,
+        task: Optional[HeadingControlTask] = None,
         time_terminal=False,
         track_deg=None,
         altitude_ft=None,
@@ -88,7 +85,7 @@ class TestHeadingControlTask(unittest.TestCase):
     def modify_sim_to_state_(
         self,
         sim: SimStub,
-        task: HeadingControlTask = None,
+        task: Optional[HeadingControlTask] = None,
         steps_terminal=False,
         track_deg=0.0,
         altitude_ft=None,
@@ -112,7 +109,7 @@ class TestHeadingControlTask(unittest.TestCase):
         v_north = math.cos(math.radians(track_deg))
         sim[prp.v_east_fps] = v_east
         sim[prp.v_north_fps] = v_north
-        task._update_track_error(sim)
+        task._update_track_error(sim)  # type: ignore[arg-type]
         sim[prp.roll_rad] = roll_rad
         sim[prp.sideslip_deg] = sideslip_deg
         return sim
@@ -182,16 +179,18 @@ class TestHeadingControlTask(unittest.TestCase):
         task = self.make_task(shaping_type=Shaping.STANDARD)
 
         self.assertIsInstance(task.assessor, Assessor)
-        self.assertEqual(2, len(task.assessor.base_components))
-        self.assertEqual(0, len(task.assessor.potential_components))
-        self.assertFalse(task.assessor.potential_components)  # assert empty
+        assessor_impl: AssessorImpl = task.assessor  # type: ignore[assignment]
+        self.assertEqual(2, len(assessor_impl.base_components))
+        self.assertEqual(0, len(assessor_impl.potential_components))
+        self.assertFalse(assessor_impl.potential_components)  # assert empty
 
     def test_init_shaping_sequential(self):
         task = self.make_task(shaping_type=Shaping.EXTRA_SEQUENTIAL)
 
         self.assertIsInstance(task.assessor, Assessor)
-        self.assertEqual(2, len(task.assessor.base_components))
-        self.assertEqual(2, len(task.assessor.potential_components))
+        assessor_impl: AssessorImpl = task.assessor  # type: ignore[assignment]
+        self.assertEqual(2, len(assessor_impl.base_components))
+        self.assertEqual(2, len(assessor_impl.potential_components))
 
     def test_get_intial_conditions_valid_target_heading(self):
         self.setUp()
@@ -275,11 +274,11 @@ class TestHeadingControlTask(unittest.TestCase):
 
     def test_task_step_returns_non_terminal_time_less_than_max(self):
         sim = self.get_perfect_state_sim(self.task, time_terminal=False)
-        _ = self.task.observe_first_state(sim)
+        _ = self.task.observe_first_state(sim)  # type: ignore[arg-type]
         non_terminal_steps_left = 2
         sim[self.task.steps_left] = non_terminal_steps_left
 
-        _, _, terminated, truncated, _ = self.task.task_step(sim, self.dummy_action, 1)
+        _, _, terminated, truncated, _ = self.task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
         is_terminal = terminated or truncated
 
         self.assertFalse(is_terminal)
@@ -323,12 +322,12 @@ class TestHeadingControlTask(unittest.TestCase):
                 positive_rewards=positive_reward,
             )
             initial_state_sim = self.get_initial_state_sim(task)
-            _ = task.observe_first_state(initial_state_sim)
+            _ = task.observe_first_state(initial_state_sim)  # type: ignore[arg-type]
             final_state_sim = self.get_perfect_state_sim(task, time_terminal=True)
             sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
             state, reward, terminated, truncated, info = task.task_step(
-                sim, self.dummy_action, 1
+                sim, self.dummy_action, 1  # type: ignore[arg-type]
             )
 
             if positive_reward:
@@ -345,12 +344,12 @@ class TestHeadingControlTask(unittest.TestCase):
                 shaping_type=Shaping.STANDARD, positive_rewards=positive_reward
             )
             initial_state_sim = self.get_initial_state_sim(task)
-            _ = task.observe_first_state(initial_state_sim)
+            _ = task.observe_first_state(initial_state_sim)  # type: ignore[arg-type]
             final_state_sim = self.get_perfect_state_sim(task, time_terminal=False)
             sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
             state, reward, terminated, truncated, info = task.task_step(
-                sim, self.dummy_action, 1
+                sim, self.dummy_action, 1  # type: ignore[arg-type]
             )
 
             if positive_reward:
@@ -367,11 +366,11 @@ class TestHeadingControlTask(unittest.TestCase):
                     shaping_type=shaping, positive_rewards=positive_reward
                 )
                 initial_state_sim = self.get_initial_state_sim(task)
-                _ = task.observe_first_state(initial_state_sim)
+                _ = task.observe_first_state(initial_state_sim)  # type: ignore[arg-type]
                 final_state_sim = self.get_perfect_state_sim(task, time_terminal=True)
                 sim = TransitioningSimStub(initial_state_sim, final_state_sim)
 
-                _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+                _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
                 reward_obj: rewards.Reward = info["reward"]
 
                 if positive_reward:
@@ -396,7 +395,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 sideslip_deg=0.0,
             )
 
-            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
             reward_obj: rewards.Reward = info["reward"]
 
             if positive_reward:
@@ -427,7 +426,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 sideslip_deg=0.0,
             )
 
-            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
             reward_obj: rewards.Reward = info["reward"]
 
             expected_positive_reward = (
@@ -461,7 +460,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 sideslip_deg=middling_sideslip,
             )
 
-            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, _, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
             reward_obj: rewards.Reward = info["reward"]
 
             if positive_reward:
@@ -506,7 +505,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 sideslip_deg=perfect_sideslip,
             )
 
-            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
             reward_obj: rewards.Reward = info["reward"]
 
             expected_shaping_reward = 0  # no improvement (initial state was perfect)
@@ -540,7 +539,7 @@ class TestHeadingControlTask(unittest.TestCase):
                 sideslip_deg=middling_sideslip,
             )
 
-            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
+            _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
             reward_obj: rewards.Reward = info["reward"]
 
             # 2 base reward components are both middling
@@ -576,7 +575,7 @@ class TestHeadingControlTask(unittest.TestCase):
                     sideslip_deg=perfect_sideslip,
                 )
 
-                _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)
+                _, reward_scalar, _, _, info = task.task_step(sim, self.dummy_action, 1)  # type: ignore[arg-type]
                 reward_obj: rewards.Reward = info["reward"]
 
                 expected_shaping_reward = -1  # went from perfect (1.) to terminal (0.)

@@ -23,12 +23,12 @@ class TestAssessorImpl(unittest.TestCase):
         return assessor_class(*args, **kwargs)
 
     @staticmethod
-    def get_dummy_state_class() -> Type[NamedTuple]:
-        return collections.namedtuple("State", ["test_prop1", "test_prop2"])
+    def get_dummy_state_class() -> Type[NamedTuple]:  # type: ignore[misc]
+        return collections.namedtuple("State", ["test_prop1", "test_prop2"])  # type: ignore[return-value]
 
-    def get_dummy_state(self, value1: float = 0.0, value2: float = 1.0):
+    def get_dummy_state(self, value1: float = 0.0, value2: float = 1.0):  # type: ignore[misc]
         State = self.get_dummy_state_class()
-        return State(value1, value2)
+        return State(value1, value2)  # type: ignore[call-overload]
 
     def test_init_throws_error_on_empty_base_components(self):
         base_components = ()

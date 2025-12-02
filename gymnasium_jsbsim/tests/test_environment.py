@@ -3,10 +3,12 @@ Tests for environment implementations.
 """
 
 import unittest
+from typing import Optional
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 import gymnasium_jsbsim
 import gymnasium_jsbsim.properties as prp
@@ -19,35 +21,36 @@ from gymnasium_jsbsim.visualiser import FlightGearVisualiser
 class TestJsbSimEnv(unittest.TestCase):
 
     def setUp(self, agent_interaction_freq: int = 10):
-        self.env = None
+        self.env: Optional[JsbSimEnv] = None
         self.init_env(agent_interaction_freq)
-        self.env.reset()
+        if self.env:
+            self.env.reset()
 
     def init_env(self, agent_interaction_freq):
         self.env = JsbSimEnv(
-            task_type=BasicFlightTask, agent_interaction_freq=agent_interaction_freq
+            task_type=BasicFlightTask, agent_interaction_freq=agent_interaction_freq  # type: ignore[arg-type]
         )
 
     def tearDown(self):
-        self.env.close()
+        self.env.close()  # type: ignore[union-attr]
 
-    def assertValidObservation(self, obs: np.array):
+    def assertValidObservation(self, obs: npt.NDArray):  # type: ignore[type-arg]
         """Helper; checks shape and values of an observation."""
         self.assertEqual(
-            self.env.observation_space.shape,
+            self.env.observation_space.shape,  # type: ignore[union-attr]
             obs.shape,
             msg="observation has wrong size",
         )
-        self.assert_in_box_space(obs, self.env.observation_space)
+        self.assert_in_box_space(obs, self.env.observation_space)  # type: ignore[union-attr]
 
-    def assertValidAction(self, action: np.array):
+    def assertValidAction(self, action: npt.NDArray):  # type: ignore[type-arg]
         """Helper; checks shape and values of an action."""
         self.assertEqual(
-            self.env.action_space.shape, action.shape, msg="action has wrong size"
+            self.env.action_space.shape, action.shape, msg="action has wrong size"  # type: ignore[union-attr]
         )
-        self.assert_in_box_space(action, self.env.action_space)
+        self.assert_in_box_space(action, self.env.action_space)  # type: ignore[union-attr]
 
-    def assert_in_box_space(self, sample: np.array, space: gym.spaces.Box) -> None:
+    def assert_in_box_space(self, sample: npt.NDArray, space: gym.spaces.Box) -> None:  # type: ignore[type-arg]
         if space.contains(sample):
             return
         else:
@@ -61,11 +64,11 @@ class TestJsbSimEnv(unittest.TestCase):
                     msg += f"\nelement {i} too high: {sample[i]} > {space.high[i]}"
             raise AssertionError(msg)
 
-    def validate_action_made(self, action: np.array):
+    def validate_action_made(self, action: npt.NDArray):  # type: ignore[type-arg]
         """Helper; confirms action was correctly input to simulation."""
         self.assertValidAction(action)
-        for prop, command in zip(self.env.task.action_variables, action):
-            actual = self.env.sim[prop]
+        for prop, command in zip(self.env.task.action_variables, action):  # type: ignore[union-attr]
+            actual = self.env.sim[prop]  # type: ignore[union-attr,index]
             self.assertAlmostEqual(
                 command, actual, msg="simulation commanded value does not match action"
             )
@@ -73,22 +76,22 @@ class TestJsbSimEnv(unittest.TestCase):
     def test_init_spaces(self):
         # check correct types for obs and action space
         self.assertIsInstance(
-            self.env.observation_space,
+            self.env.observation_space,  # type: ignore[union-attr]
             gym.Space,
             msg="observation_space is not a Space object",
         )
         self.assertIsInstance(
-            self.env.action_space, gym.Space, msg="action_space is not a Space object"
+            self.env.action_space, gym.Space, msg="action_space is not a Space object"  # type: ignore[union-attr]
         )
 
         # check low and high values are as expected
-        obs_lows = self.env.observation_space.low
-        obs_highs = self.env.observation_space.high
+        obs_lows = self.env.observation_space.low  # type: ignore[union-attr]
+        obs_highs = self.env.observation_space.high  # type: ignore[union-attr]
         # action bounds checked by action space test above
 
         _places_tol = 3
 
-        for prop, lo, hi in zip(self.env.task.state_variables, obs_lows, obs_highs):
+        for prop, lo, hi in zip(self.env.task.state_variables, obs_lows, obs_highs):  # type: ignore[union-attr]
             self.assertAlmostEqual(
                 lo,
                 prop.min,
@@ -102,68 +105,68 @@ class TestJsbSimEnv(unittest.TestCase):
 
     def test_reset_env(self):
         self.setUp()
-        obs, info = self.env.reset()
+        obs, info = self.env.reset()  # type: ignore[union-attr]
 
         self.assertValidObservation(obs)
 
     def test_do_action(self):
         self.setUp()
-        action1 = np.array([0.0] * len(self.env.task.action_variables))
-        action2 = np.linspace(-0.5, 0.5, num=len(self.env.task.action_variables))
+        action1 = np.array([0.0] * len(self.env.task.action_variables))  # type: ignore[union-attr]
+        action2 = np.linspace(-0.5, 0.5, num=len(self.env.task.action_variables))  # type: ignore[union-attr]
 
         # do an action and check results
-        obs, _, _, _, _ = self.env.step(action1)
+        obs, _, _, _, _ = self.env.step(action1)  # type: ignore[union-attr]
         self.assertValidObservation(obs)
         self.validate_action_made(action1)
 
         # repeat action several times
         for _ in range(3):
-            obs, _, _, _, _ = self.env.step(action1)
+            obs, _, _, _, _ = self.env.step(action1)  # type: ignore[union-attr]
             self.assertValidObservation(obs)
             self.validate_action_made(action1)
 
         # repeat new action
         for _ in range(3):
-            obs, _, _, _, _ = self.env.step(action2)
+            obs, _, _, _, _ = self.env.step(action2)  # type: ignore[union-attr]
             self.assertValidObservation(obs)
             self.validate_action_made(action2)
 
     def test_figure_created_closed(self):
-        self.env.render(mode="human")
-        self.assertIsInstance(self.env.figure_visualiser.figure, plt.Figure)
-        self.env.close()
-        self.assertIsNone(self.env.figure_visualiser.figure)
+        self.env.render(mode="human")  # type: ignore[union-attr]
+        self.assertIsInstance(self.env.figure_visualiser.figure, plt.Figure)  # type: ignore[union-attr]
+        self.env.close()  # type: ignore[union-attr]
+        self.assertIsNone(self.env.figure_visualiser.figure)  # type: ignore[union-attr]
 
     def test_plot_state(self):
         # note: this checks that plot works without throwing exception
         # correctness of plot must be checked in appropriate manual_test
         self.setUp()
-        self.env.render(mode="human")
+        self.env.render(mode="human")  # type: ignore[union-attr]
 
-        action = np.array([0.0] * len(self.env.task.action_variables))
+        action = np.array([0.0] * len(self.env.task.action_variables))  # type: ignore[union-attr]
         # repeat action several times
         for _ in range(3):
-            obs, _, _, _, _ = self.env.step(action)
-            self.env.render(mode="human")
+            obs, _, _, _, _ = self.env.step(action)  # type: ignore[union-attr]
+            self.env.render(mode="human")  # type: ignore[union-attr]
 
     def test_plot_actions(self):
         # note: this checks that plot works without throwing exception
         # correctness of plot must be checked in appropriate manual_test
-        self.env.render(mode="human")
+        self.env.render(mode="human")  # type: ignore[union-attr]
 
         # repeat action several times
         for _ in range(100):
-            action = self.env.action_space.sample()
-            _, _, _, _, _ = self.env.step(action)
-            self.env.render(mode="human")
+            action = self.env.action_space.sample()  # type: ignore[union-attr]
+            _, _, _, _, _ = self.env.step(action)  # type: ignore[union-attr]
+            self.env.render(mode="human")  # type: ignore[union-attr]
 
     def test_asl_agl_elevations_equal(self):
         # we want the height above sea level to equal ground elevation at all times
         self.setUp(agent_interaction_freq=1)
         for i in range(25):
-            self.env.step(action=self.env.action_space.sample())
-            alt_sl = self.env.sim[prp.altitude_sl_ft]
-            alt_gl = self.env.sim[prp.BoundedProperty("position/h-agl-ft", "", 0, 0)]
+            self.env.step(action=self.env.action_space.sample())  # type: ignore[union-attr]
+            alt_sl = self.env.sim[prp.altitude_sl_ft]  # type: ignore[union-attr,index]
+            alt_gl = self.env.sim[prp.BoundedProperty("position/h-agl-ft", "", 0, 0)]  # type: ignore[union-attr,index]
             # Allow small tolerance (0.1 ft) for JSBSim numerical precision
             self.assertAlmostEqual(alt_sl, alt_gl, places=1)
 
@@ -172,9 +175,9 @@ class TestJsbSimEnv(unittest.TestCase):
     )
     def test_render_flightgear_mode(self):
         self.setUp()
-        self.env.render(mode="flightgear", flightgear_blocking=False)
-        self.assertIsInstance(self.env.flightgear_visualiser, FlightGearVisualiser)
-        self.env.close()
+        self.env.render(mode="flightgear", flightgear_blocking=False)  # type: ignore[union-attr]
+        self.assertIsInstance(self.env.flightgear_visualiser, FlightGearVisualiser)  # type: ignore[union-attr]
+        self.env.close()  # type: ignore[union-attr]
 
 
 @unittest.skipIf(not utils.is_flightgear_installed(), reason="FlightGear not installed")
@@ -182,12 +185,12 @@ class TestNoFlightGearJsbSimEnv(TestJsbSimEnv):
 
     def init_env(self, agent_interaction_freq):
         self.env = NoFGJsbSimEnv(
-            task_type=BasicFlightTask, agent_interaction_freq=agent_interaction_freq
+            task_type=BasicFlightTask, agent_interaction_freq=agent_interaction_freq  # type: ignore[arg-type]
         )
 
     def test_render_flightgear_mode(self):
         with self.assertRaises(ValueError):
-            self.env.render(mode="flightgear")
+            self.env.render(mode="flightgear")  # type: ignore[union-attr]
 
 
 class TestGymRegistration(unittest.TestCase):
@@ -236,5 +239,5 @@ class TestGymRegistration(unittest.TestCase):
                             self.assertIsInstance(env.unwrapped, JsbSimEnv)
                         else:
                             self.assertIsInstance(env.unwrapped, NoFGJsbSimEnv)
-                        self.assertIsInstance(env.unwrapped.task, task)
-                        self.assertEqual(env.unwrapped.aircraft, plane)
+                        self.assertIsInstance(env.unwrapped.task, task)  # type: ignore[attr-defined]
+                        self.assertEqual(env.unwrapped.aircraft, plane)  # type: ignore[attr-defined]

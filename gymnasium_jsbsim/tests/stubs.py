@@ -4,7 +4,7 @@ Test stubs and fixtures.
 
 import collections
 import copy
-from typing import Dict, Iterable, NamedTuple, Tuple
+from typing import Dict, Iterable, NamedTuple, Tuple, Union
 
 import gymnasium_jsbsim.properties as prp
 from gymnasium_jsbsim import constants, rewards
@@ -37,7 +37,7 @@ class FlightTaskStub(FlightTask):
         self.action_variables = (prp.aileron_cmd, prp.elevator_cmd)
         super().__init__(AssessorStub())
 
-    def _is_terminal(self, _: Tuple[float, ...], __: float) -> bool:
+    def _is_terminal(self, sim: Simulation) -> bool:  # type: ignore[override]
         return False
 
     def get_initial_conditions(self):
@@ -51,11 +51,11 @@ class FlightTaskStub(FlightTask):
         return prp.u_fps, prp.altitude_sl_ft, prp.heading_deg
 
     @staticmethod
-    def get_dummy_state_class_and_properties(length: int):
+    def get_dummy_state_class_and_properties(length: int):  # type: ignore[misc]
         dummy_properties = tuple(
             prp.Property("test_prop" + str(i), "") for i in range(length)
         )
-        DummyState = collections.namedtuple(
+        DummyState = collections.namedtuple(  # type: ignore[misc]
             "DummyState", [prop.name for prop in dummy_properties]
         )
         return DummyState, dummy_properties
@@ -74,7 +74,7 @@ class FlightTaskStub(FlightTask):
         )
         return DummyState(*values_safe), props
 
-    def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation):
+    def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation) -> bool:  # type: ignore[override]
         return False
 
 
@@ -95,7 +95,7 @@ class BasicFlightTask(FlightTask):
     def get_props_to_output(self) -> Tuple:
         return prp.u_fps, prp.altitude_sl_ft, prp.heading_deg
 
-    def _reward_terminal_override(
+    def _reward_terminal_override(  # type: ignore[override]
         self, reward: rewards.Reward, sim: Simulation
     ) -> bool:
         return False
@@ -119,10 +119,10 @@ class SimStub:
         """Gets the simulation time from JSBSim, a float."""
         return self[prp.sim_time_s]
 
-    def __setitem__(self, prop: prp.Property, value: float):
+    def __setitem__(self, prop: Union[prp.Property, prp.BoundedProperty], value: float):
         return self.data.__setitem__(prop.name, value)
 
-    def __getitem__(self, prop: prp.Property) -> float:
+    def __getitem__(self, prop: Union[prp.Property, prp.BoundedProperty]) -> float:
         return self.data.__getitem__(prop.name)
 
     def copy(self):
@@ -187,10 +187,10 @@ class TransitioningSimStub:
     def run(self):
         self.current_sim = self.next_sim
 
-    def __setitem__(self, prop: prp.Property, value: float):
+    def __setitem__(self, prop: Union[prp.Property, prp.BoundedProperty], value: float):
         self.current_sim[prop] = value
 
-    def __getitem__(self, prop: prp.Property) -> float:
+    def __getitem__(self, prop: Union[prp.Property, prp.BoundedProperty]) -> float:
         return self.current_sim[prop]
 
     def start_engines(self):

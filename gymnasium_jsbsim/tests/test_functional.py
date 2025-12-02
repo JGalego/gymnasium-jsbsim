@@ -18,11 +18,11 @@ class AgentEnvInteractionTest(unittest.TestCase):
     """Tests for agents interacting with env."""
 
     def init_and_reset_env(self, env: JsbSimEnv):
-        self.assertIsInstance(env.unwrapped.task, HeadingControlTask)
+        self.assertIsInstance(env.unwrapped.task, HeadingControlTask)  # type: ignore[attr-defined]
 
         # we interact at 5 Hz, so we expect the sim to run 12 timesteps per
         #   interaction since it runs at 60 Hz
-        self.assertEqual(12, env.unwrapped.sim_steps_per_agent_step)
+        self.assertEqual(12, env.unwrapped.sim_steps_per_agent_step)  # type: ignore[attr-defined]
 
         # we init a random agent with a seed
         agent = RandomAgent(action_space=env.action_space)
@@ -30,7 +30,7 @@ class AgentEnvInteractionTest(unittest.TestCase):
 
         # this task has an action space of three controls: aileron, elevator, rudder
         expected_num_actions = 3
-        self.assertEqual(expected_num_actions, len(agent.action_space.low))
+        self.assertEqual(expected_num_actions, len(agent.action_space.low))  # type: ignore[attr-defined]
         # we see that the action space has the correct low and high range of +-1.0
         expect_low = np.array([-1.0] * expected_num_actions)
         expect_high = np.array([1.0] * expected_num_actions)
@@ -43,7 +43,7 @@ class AgentEnvInteractionTest(unittest.TestCase):
 
         # we close the env and JSBSim closes with it
         env.close()
-        self.assertIsNone(env.unwrapped.sim.jsbsim)
+        self.assertIsNone(env.unwrapped.sim.jsbsim)  # type: ignore[attr-defined]
 
     def take_step_with_random_agent(self, env: JsbSimEnv):
         # Unwrap the environment to access the underlying JsbSimEnv
@@ -63,26 +63,26 @@ class AgentEnvInteractionTest(unittest.TestCase):
             msg="state should have changed after simulation step",
         )
         expected_time_step_size = (
-            env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ
+            env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ  # type: ignore[attr-defined]
         )
         self.assertAlmostEqual(
-            expected_time_step_size, env.unwrapped.sim.get_sim_time()
+            expected_time_step_size, env.unwrapped.sim.get_sim_time()  # type: ignore[attr-defined]
         )
         self.assertFalse(
             terminated or truncated, msg="episode is terminal after only a single step"
         )
 
         # the aircraft engines are running, as per initial conditions
-        self.assertNotAlmostEqual(env.unwrapped.sim[prp.engine_thrust_lbs], 0)
+        self.assertNotAlmostEqual(env.unwrapped.sim[prp.engine_thrust_lbs], 0)  # type: ignore[attr-defined]
 
         env.close()
 
     def test_init_and_reset_all_envs(self):
         for env_id in get_env_id_kwargs_map():
             env = gym.make(env_id)
-            self.init_and_reset_env(env)
+            self.init_and_reset_env(env)  # type: ignore[arg-type]
 
     def test_take_step_with_random_agent_all_envs(self):
         for env_id in get_env_id_kwargs_map():
             env = gym.make(env_id)
-            self.take_step_with_random_agent(env)
+            self.take_step_with_random_agent(env)  # type: ignore[arg-type]

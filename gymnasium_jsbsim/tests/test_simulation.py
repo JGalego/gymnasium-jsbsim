@@ -5,6 +5,7 @@ Tests for simulation wrapper.
 import multiprocessing
 import time
 import unittest
+from typing import Optional
 
 import jsbsim
 
@@ -14,7 +15,7 @@ from gymnasium_jsbsim.simulation import Simulation
 
 
 class TestSimulation(unittest.TestCase):
-    sim: Simulation = None
+    sim: Optional[Simulation] = None
 
     def setUp(self):
         if self.sim:
@@ -26,7 +27,7 @@ class TestSimulation(unittest.TestCase):
 
     def test_init_jsbsim(self):
         self.assertIsInstance(
-            self.sim.jsbsim,
+            self.sim.jsbsim,  # type: ignore[union-attr]
             jsbsim.FGFDMExec,
             msg="Expected Simulation.jsbsim to hold an " "instance of JSBSim.",
         )
@@ -64,14 +65,14 @@ class TestSimulation(unittest.TestCase):
         }
 
         for prop, expected in expected_values.items():
-            actual = self.sim[prop]
+            actual = self.sim[prop]  # type: ignore[index]
             self.assertAlmostEqual(expected, actual)
 
     def test_get_bad_property(self):
         self.setUp()
         bad_prop = prp.BoundedProperty("bad_prop_name", "", 0, 0)
         with self.assertRaises(KeyError):
-            _ = self.sim[bad_prop]
+            _ = self.sim[bad_prop]  # type: ignore[index]
 
     def test_set_property(self):
         self.setUp()
@@ -84,10 +85,10 @@ class TestSimulation(unittest.TestCase):
         }
 
         for prop, value in set_values.items():
-            self.sim[prop] = value
+            self.sim[prop] = value  # type: ignore[index]
 
         for prop, expected in set_values.items():
-            actual = self.sim[prop]
+            actual = self.sim[prop]  # type: ignore[index]
             self.assertAlmostEqual(expected, actual)
 
     def test_initialise_conditions_basic_config(self):
@@ -102,10 +103,9 @@ class TestSimulation(unittest.TestCase):
         )
 
         self.assertEqual(
-            self.sim.get_loaded_model_name(),
+            self.sim.get_loaded_model_name(),  # type: ignore[union-attr]
             plane.jsbsim_id,
-            msg="JSBSim did not load expected aircraft model: "
-            + self.sim.get_loaded_model_name(),
+            msg=f"JSBSim did not load expected aircraft model: {self.sim.get_loaded_model_name()}",  # type: ignore[union-attr]
         )
 
         # check that properties are as we expected them to be
@@ -116,12 +116,15 @@ class TestSimulation(unittest.TestCase):
             prp.u_fps: 328.0,
             prp.v_fps: 0.0,
             prp.w_fps: 0.0,
-            prp.BoundedProperty("simulation/dt", "", None, None): 1 / sim_frequency,
         }
 
         for prop, expected in expected_values.items():
-            actual = self.sim[prop]
+            actual = self.sim[prop]  # type: ignore[index]
             self.assertAlmostEqual(expected, actual)
+
+        # Check sim_dt separately
+        sim_dt = prp.BoundedProperty("simulation/dt", "", None, None)
+        self.assertAlmostEqual(1 / sim_frequency, self.sim[sim_dt])  # type: ignore[index]
 
     def test_initialise_conditions_custom_config(self):
         """Test JSBSimInstance initialisation with custom initial conditions."""
@@ -155,8 +158,8 @@ class TestSimulation(unittest.TestCase):
         for init_prop, expected in init_conditions.items():
             sim_prop = init_to_sim_conditions[init_prop]
 
-            init_actual = self.sim[init_prop]
-            sim_actual = self.sim[sim_prop]
+            init_actual = self.sim[init_prop]  # type: ignore[index]
+            sim_actual = self.sim[sim_prop]  # type: ignore[index]
             self.assertAlmostEqual(
                 expected, init_actual, msg=f"wrong value for property {init_prop}"
             )
@@ -164,7 +167,7 @@ class TestSimulation(unittest.TestCase):
                 expected, sim_actual, msg=f"wrong value for property {sim_prop}"
             )
 
-        self.assertAlmostEqual(1.0 / sim_frequency, self.sim[prp.sim_dt])
+        self.assertAlmostEqual(1.0 / sim_frequency, self.sim[prp.sim_dt])  # type: ignore[index]
 
     def test_multiprocess_simulations(self):
         """

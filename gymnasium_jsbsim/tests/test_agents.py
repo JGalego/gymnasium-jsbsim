@@ -26,7 +26,7 @@ class TestConstantAgent(unittest.TestCase):
     def setUp(self):
         self.task = FlightTaskStub()
         self.action_space = self.task.get_action_space()
-        self.agent = ConstantAgent(action_space=self.action_space)
+        self.agent = ConstantAgent(action_space=self.action_space)  # type: ignore[arg-type]
 
     def test_act_generates_valid_actions(self):
         num_test_actions = 3
