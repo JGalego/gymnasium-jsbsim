@@ -203,6 +203,12 @@ viz_env = gym.make("JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-FG-v0"
 
 Gymnasium-JSBSim communicates with FlightGear via UDP socket on port 5550 using JSBSim's native FlightGear output protocol. The data is sent at 60 Hz.
 
+**Protocol details:**
+- **Protocol**: UDP socket
+- **Port**: 5550 (default)
+- **Rate**: 60 Hz
+- **Format**: FlightGear native FDM (Flight Dynamics Model)
+
 ### FlightGear Launch Parameters
 
 When you call `env.unwrapped.render(mode="flightgear")`, Gymnasium-JSBSim launches FlightGear with these parameters:
@@ -217,9 +223,55 @@ fgfs \
   --timeofday=noon
 ```
 
+**Parameters explained:**
+- `--aircraft`: Aircraft model to display (e.g., c172p for Cessna 172P)
+- `--native-fdm`: Native FDM protocol configuration
+  - `socket,in`: Input via socket
+  - `60`: Update rate (Hz)
+  - `5550`: UDP port number
+  - `udp`: Protocol type
+- `--fdm=external`: Use external flight dynamics (from JSBSim)
+- `--disable-ai-traffic`: Disable AI traffic for better performance
+- `--disable-real-weather-fetch`: Use static weather
+- `--timeofday=noon`: Set time of day
+
 ### Configuration Files
 
-The FlightGear output configuration is defined in `gymnasium_jsbsim/flightgear.xml`.
+The FlightGear output configuration is defined in `gymnasium_jsbsim/flightgear.xml`:
+
+```xml
+<output name="localhost" type="FLIGHTGEAR" protocol="UDP" port="5550" rate="60">
+</output>
+```
+
+This configuration:
+- Sends data to localhost
+- Uses FlightGear protocol
+- Communicates via UDP on port 5550
+- Updates at 60 Hz
+
+### Manual Setup (Standalone JSBSim)
+
+If you're using JSBSim standalone (without this gymnasium environment), you can manually connect it to FlightGear:
+
+#### 1. Start FlightGear
+
+```bash
+fgfs --fg-root="{your path}" \
+     --aircraft=c172p \
+     --native-fdm=socket,in,60,,5550,udp \
+     --fdm=external
+```
+
+#### 2. Start JSBSim
+
+```bash
+jsbsim --realtime \
+       --output-directive=data_output/flightgear.xml \
+       --script=scripts/c172.xml
+```
+
+**Note**: When using Gymnasium-JSBSim, this is all handled automatically - you don't need to start FlightGear manually.
 
 ## Advanced Usage
 

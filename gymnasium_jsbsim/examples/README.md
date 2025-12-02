@@ -111,27 +111,44 @@ USE_TENSORBOARD = False  # Enable TensorBoard logging
 - Model saved as `ppo_aircraft_simple.zip`
 - Final test episode results
 
-**To visualize the trained model:**
-See the FlightGear visualization example in `random_agent_flightgear.py` or load the model programmatically:
+### 4. View Trained Agent (`view_agent.py`)
 
-```python
-from stable_baselines3 import PPO
-import gymnasium as gym
-import gymnasium_jsbsim
+Visualize any trained model with FlightGear 3D visualization.
 
-model = PPO.load("ppo_aircraft_simple")
-env = gym.make("JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-FG-v0")
-obs, info = env.reset()
-env.unwrapped.render(mode="flightgear", flightgear_blocking=True)
+**Requirements:**
 
-for _ in range(100):
-    action, _ = model.predict(obs, deterministic=True)
-    obs, reward, terminated, truncated, info = env.step(action)
-    env.unwrapped.render(mode="flightgear")
-    if terminated or truncated:
-        break
-env.close()
+```bash
+pip install stable-baselines3
+sudo apt-get install flightgear  # Ubuntu/Debian
 ```
+
+**Usage:**
+
+```bash
+# Basic usage (visualize default model)
+python gymnasium_jsbsim/examples/view_agent.py
+
+# Specify model and options
+python gymnasium_jsbsim/examples/view_agent.py \
+    --model ppo_aircraft_simple.zip \
+    --env JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-FG-v0 \
+    --episodes 5 \
+    --delay 0.05
+```
+
+**What it demonstrates:**
+- Loading pre-trained models
+- FlightGear 3D visualization
+- Performance statistics
+- Configurable visualization parameters
+
+**Command-line options:**
+- `--model PATH`: Trained model file (default: `ppo_aircraft_simple.zip`)
+- `--env ENV_ID`: FlightGear environment to use
+- `--episodes N`: Number of episodes (default: 3)
+- `--max-steps N`: Max steps per episode (default: 300)
+- `--delay SECS`: Delay between steps (default: 0.05)
+- `--stochastic`: Use stochastic policy (default: deterministic)
 
 ## Monitoring Training Progress
 
@@ -207,14 +224,15 @@ python gymnasium_jsbsim/examples/random_agent_flightgear.py
 # 4. Train an agent
 python gymnasium_jsbsim/examples/train_agent.py
 
-# 5. Load and visualize trained model (see train_agent.py docs for code example)
+# 5. Visualize the trained agent with FlightGear
+python gymnasium_jsbsim/examples/view_agent.py --model ppo_aircraft_simple.zip
 ```
 
 ## Next Steps
 
 After training an agent:
 
-1. **Visualize**: Load your model and use a FlightGear-enabled environment (see code example in `train_agent.py` section)
+1. **Visualize**: Use `view_agent.py` to see your trained agent in FlightGear
 2. **Fine-tune**: Continue training with `model.learn(total_timesteps=...)`
 3. **Experiment**: Try different tasks, aircraft, and reward shaping
 4. **Compare**: Train multiple models and benchmark performance

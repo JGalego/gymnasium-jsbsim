@@ -2,6 +2,7 @@
 
 import subprocess
 import time
+from dataclasses import dataclass
 from typing import NamedTuple, Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,54 @@ import gymnasium_jsbsim.properties as prp
 from gymnasium_jsbsim import constants
 from gymnasium_jsbsim.aircraft import Aircraft
 from gymnasium_jsbsim.simulation import Simulation
+
+
+@dataclass
+class FlightGearConfig:
+    """Configuration for FlightGear performance and visual settings."""
+
+    # Performance settings
+    enable_ai_traffic: bool = constants.FG_ENABLE_AI_TRAFFIC
+    enable_real_weather: bool = constants.FG_ENABLE_REAL_WEATHER
+    enable_random_objects: bool = constants.FG_ENABLE_RANDOM_OBJECTS
+    enable_random_vegetation: bool = constants.FG_ENABLE_RANDOM_VEGETATION
+    enable_random_buildings: bool = constants.FG_ENABLE_RANDOM_BUILDINGS
+    enable_panel: bool = constants.FG_ENABLE_PANEL
+    enable_sound: bool = constants.FG_ENABLE_SOUND
+    enable_hud_3d: bool = constants.FG_ENABLE_HUD_3D
+    enable_clouds: bool = constants.FG_ENABLE_CLOUDS
+    enable_clouds_3d: bool = constants.FG_ENABLE_CLOUDS_3D
+    enable_horizon_effect: bool = constants.FG_ENABLE_HORIZON_EFFECT
+    enable_enhanced_lighting: bool = constants.FG_ENABLE_ENHANCED_LIGHTING
+    enable_distance_attenuation: bool = constants.FG_ENABLE_DISTANCE_ATTENUATION
+    enable_specular_highlight: bool = constants.FG_ENABLE_SPECULAR_HIGHLIGHT
+    visibility_m: int = constants.FG_VISIBILITY_M
+
+    @classmethod
+    def performance_mode(cls) -> "FlightGearConfig":
+        """Create config optimized for performance (all features disabled)."""
+        return cls()  # Uses defaults which are already optimized
+
+    @classmethod
+    def quality_mode(cls) -> "FlightGearConfig":
+        """Create config optimized for visual quality (most features enabled)."""
+        return cls(
+            enable_ai_traffic=False,  # Keep disabled for performance
+            enable_real_weather=False,  # Keep disabled for consistency
+            enable_random_objects=True,
+            enable_random_vegetation=True,
+            enable_random_buildings=True,
+            enable_panel=True,
+            enable_sound=True,
+            enable_hud_3d=True,
+            enable_clouds=True,
+            enable_clouds_3d=True,
+            enable_horizon_effect=True,
+            enable_enhanced_lighting=True,
+            enable_distance_attenuation=True,
+            enable_specular_highlight=True,
+            visibility_m=15000,
+        )
 
 
 class AxesTuple(NamedTuple):
@@ -248,23 +297,31 @@ class FlightGearVisualiser:
     """
 
     def __init__(
-        self, sim: Simulation, print_props: Tuple[prp.Property], block_until_loaded=True
+        self,
+        sim: Simulation,
+        print_props: Tuple[prp.Property],
+        block_until_loaded: bool = True,
+        config: Optional[FlightGearConfig] = None,
     ):
         """
         Launches FlightGear in subprocess and starts figure for plotting actions.
 
         :param sim: Simulation that will be visualised
-        :param aircraft: Aircraft to be loaded in FlightGear for visualisation
         :param print_props: collection of Propertys to be printed to Figure
         :param block_until_loaded: visualiser will block until it detects that
             FlightGear has loaded if True.
+        :param config: FlightGearConfig for performance/quality settings.
+            If None, uses default performance-optimized settings.
         """
         self.configure_simulation_output(sim)
         self.print_props = print_props
+        self.config = config or FlightGearConfig.performance_mode()
         # Note: subprocess is managed manually (not with context manager)
         # Because it needs to stay alive for the visualiser's lifetime
         # And is explicitly closed in close() method
-        self.flightgear_process = self._launch_flightgear(sim.get_aircraft())
+        self.flightgear_process = self._launch_flightgear(
+            sim.get_aircraft(), self.config
+        )
         self.figure = FigureVisualiser(sim, print_props)
         if block_until_loaded:
             time.sleep(20)
@@ -277,13 +334,16 @@ class FlightGearVisualiser:
         self.figure.plot(sim)
 
     @staticmethod
-    def _launch_flightgear(aircraft: Aircraft):
+    def _launch_flightgear(aircraft: Aircraft, config: FlightGearConfig):
         """Launch FlightGear subprocess for visualization."""
         cmd_line_args = FlightGearVisualiser._create_cmd_line_args(
-            aircraft.flightgear_id
+            aircraft.flightgear_id, config
         )
         # Subprocess is not used with context manager because it needs to persist
         # And is managed manually via close() method
+
+        print("Launching FlightGear with command:")
+        print(" ".join(cmd_line_args))
 
         flightgear_process = subprocess.Popen(
             cmd_line_args,
@@ -298,34 +358,59 @@ class FlightGearVisualiser:
         sim.set_simulation_time_factor(constants.FG_TIME_FACTOR)
 
     @staticmethod
-    def _create_cmd_line_args(aircraft_id: str):
+    def _create_cmd_line_args(aircraft_id: str, config: FlightGearConfig):
+        """Create FlightGear command line arguments based on configuration."""
         # FlightGear doesn't have a 172X model, use the P instead
         if aircraft_id == "c172x":
             aircraft_id = "c172p"
 
-        flightgear_cmd = "fgfs"
-        aircraft_arg = f"--aircraft={aircraft_id}"
-        flight_model_arg = (
-            "--native-fdm=" + f"{constants.FG_TYPE},"
-            f"{constants.FG_DIRECTION},"
-            f"{constants.FG_RATE},"
-            f"{constants.FG_SERVER},"
-            f"{constants.FG_PORT},"
-            f"{constants.FG_PROTOCOL}"
-        )
-        flight_model_type_arg = "--fdm=" + "external"
-        disable_ai_arg = "--disable-ai-traffic"
-        disable_live_weather_arg = "--disable-real-weather-fetch"
-        time_of_day_arg = "--timeofday=" + constants.FG_TIME
-        return (
-            flightgear_cmd,
-            aircraft_arg,
-            flight_model_arg,
-            flight_model_type_arg,
-            disable_ai_arg,
-            disable_live_weather_arg,
-            time_of_day_arg,
-        )
+        # Base required arguments
+        args = [
+            "fgfs",
+            f"--aircraft={aircraft_id}",
+            f"--native-fdm={constants.FG_TYPE},{constants.FG_DIRECTION},"
+            f"{constants.FG_RATE},{constants.FG_SERVER},{constants.FG_PORT},"
+            f"{constants.FG_PROTOCOL}",
+            "--fdm=external",
+        ]
+
+        # Add conditional arguments based on config
+        if not config.enable_ai_traffic:
+            args.append("--disable-ai-traffic")
+        if not config.enable_real_weather:
+            args.append("--disable-real-weather-fetch")
+        if not config.enable_random_objects:
+            args.append("--disable-random-objects")
+        if not config.enable_random_vegetation:
+            args.append("--disable-random-vegetation")
+        if not config.enable_random_buildings:
+            args.append("--disable-random-buildings")
+        if not config.enable_panel:
+            args.append("--disable-panel")
+        if not config.enable_sound:
+            args.append("--disable-sound")
+        if not config.enable_hud_3d:
+            args.append("--disable-hud-3d")
+        if not config.enable_clouds:
+            args.append("--disable-clouds")
+        if not config.enable_clouds_3d:
+            args.append("--disable-clouds3d")
+        if not config.enable_horizon_effect:
+            args.append("--disable-horizon-effect")
+        if not config.enable_enhanced_lighting:
+            args.append("--disable-enhanced-lighting")
+        if not config.enable_distance_attenuation:
+            args.append("--disable-distance-attenuation")
+        if not config.enable_specular_highlight:
+            args.append("--disable-specular-highlight")
+
+        # Graphics settings
+        args.append(f"--visibility={config.visibility_m}")
+
+        # Time of day
+        args.append(f"--timeofday={constants.FG_TIME}")
+
+        return tuple(args)
 
     def _block_until_flightgear_loaded(self):
         """Wait until FlightGear has finished loading."""

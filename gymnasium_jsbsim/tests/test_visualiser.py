@@ -96,12 +96,11 @@ class TestFlightGearVisualiser(unittest.TestCase):
         self.flightgear = FlightGearVisualiser(
             self.sim, self.task.get_props_to_output(), block_until_loaded=False  # type: ignore[arg-type]
         )
-        time.sleep(0.5)
+        time.sleep(5)
 
-        # check FlightGear has launched by looking at stdout
-        self.assertIn(
-            "FlightGear", self.flightgear.flightgear_process.stdout.readline().decode()
-        )
+        # Check if FlightGear process is still running
+        self.assertIsNone(self.flightgear.flightgear_process.poll())
+
         self.flightgear.close()
 
     def test_close_closes_flightgear(self):

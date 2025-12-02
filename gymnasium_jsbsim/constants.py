@@ -75,3 +75,20 @@ FG_PROTOCOL = "udp"
 FG_LOADED_MESSAGE = "loading cities done"
 FG_TIME_FACTOR = 1  # sim speed relative to realtime, higher is faster
 FG_TIME = "dusk"
+
+# FlightGear Performance Settings
+FG_ENABLE_AI_TRAFFIC = False
+FG_ENABLE_REAL_WEATHER = False
+FG_ENABLE_RANDOM_OBJECTS = False
+FG_ENABLE_RANDOM_VEGETATION = False
+FG_ENABLE_RANDOM_BUILDINGS = False
+FG_ENABLE_PANEL = False
+FG_ENABLE_SOUND = False
+FG_ENABLE_HUD_3D = False
+FG_ENABLE_CLOUDS = False
+FG_ENABLE_CLOUDS_3D = False
+FG_ENABLE_HORIZON_EFFECT = False
+FG_ENABLE_ENHANCED_LIGHTING = True  # will be removed in future versions
+FG_ENABLE_DISTANCE_ATTENUATION = False
+FG_ENABLE_SPECULAR_HIGHLIGHT = False
+FG_VISIBILITY_M = 5000  # Visibility distance in meters

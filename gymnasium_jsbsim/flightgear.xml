@@ -1,18 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+FlightGear output configuration for JSBSim.
+Sends flight dynamics data via UDP to FlightGear for 3D visualization.
 
-Include this file on your JSBSim standalone application command line in order to send 
-data to a running instance of FlightGear to command FlightGear to display
-visuals for your running script.
-
-Start FlightGear like this:
-
-fgfs.exe -fg-root="{your path}" -aircraft=c172p -native-fdm=socket,in,60,,5550,udp -fdm=external
-
-Then, start up your JSBSim script like this:
- 
-src/jsbsim -realtime data_output/flightgear.xml scripts/c1723.xml
- 
+For usage instructions, see docs/FLIGHTGEAR_INTEGRATION.md
 -->
 
 <output name="localhost" type="FLIGHTGEAR" protocol="UDP" port="5550" rate="60">
