@@ -13,6 +13,8 @@ Optional TensorBoard visualization:
     Open http://localhost:6006 in your browser.
 """
 
+import os
+
 import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -23,7 +25,11 @@ import gymnasium_jsbsim  # noqa: F401
 ENV_ID = "JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0"
 TOTAL_TIMESTEPS = 100_000  # Increase for better performance
 N_ENVS = 4  # Number of parallel environments
-USE_TENSORBOARD = False  # Set to True to enable TensorBoard logging
+USE_TENSORBOARD = os.getenv("USE_TENSORBOARD", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)  # Set to True to enable TensorBoard logging
 
 print(f"Training PPO agent on {ENV_ID}")
 print(f"Total timesteps: {TOTAL_TIMESTEPS:,}")

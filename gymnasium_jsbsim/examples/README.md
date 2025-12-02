@@ -2,11 +2,33 @@
 
 This directory contains examples demonstrating how to use the gymnasium-jsbsim environment for reinforcement learning.
 
+## Quick Setup Check
+
+Before running examples with FlightGear, verify your setup:
+
+```bash
+# Basic checks (fast)
+python gymnasium_jsbsim/examples/check_flightgear_setup.py
+
+# Also test FlightGear launch (opens window)
+python gymnasium_jsbsim/examples/check_flightgear_setup.py --test-launch
+```
+
+This diagnostic tool checks:
+- Python version and packages
+- FlightGear installation
+- JSBSim installation
+- Network port availability
+- Environment creation
+- FlightGear launch test (with `--test-launch`)
+
+See [FLIGHTGEAR_SETUP.md](FLIGHTGEAR_SETUP.md) for detailed setup instructions.
+
 ## Available Examples
 
 ### 1. Random Agent (`random_agent.py`)
 
-A simple example showing basic environment interaction with a random agent.
+A simple example showing basic environment interaction with a random agent (no visualization).
 
 **Usage:**
 
@@ -15,13 +37,47 @@ python gymnasium_jsbsim/examples/random_agent.py
 ```
 
 **What it demonstrates:**
-- Creating an environment
+- Creating a basic environment
 - Taking random actions
 - Basic environment loop
+- Step-by-step observation and reward printing
 
-### 2. Train Agent (`train_agent.py`)
+### 2. Random Agent with FlightGear (`random_agent_flightgear.py`)
 
-A training example using PPO (Proximal Policy Optimization) to train an aircraft control agent.
+Random agent with FlightGear 3D visualization and performance tracking.
+
+**Requirements:**
+
+```bash
+# Install FlightGear (see FLIGHTGEAR_SETUP.md for detailed instructions)
+# Ubuntu/Debian:
+sudo apt-get install flightgear
+
+# macOS:
+brew install --cask flightgear
+
+# Verify installation:
+fgfs --version
+```
+
+**Usage:**
+
+```bash
+python gymnasium_jsbsim/examples/random_agent_flightgear.py
+```
+
+**What it demonstrates:**
+- FlightGear 3D visualization
+- Running multiple episodes
+- Performance statistics collection
+- Proper error handling and cleanup
+- Control surface visualization
+
+**See also:** [FLIGHTGEAR_SETUP.md](FLIGHTGEAR_SETUP.md) for complete FlightGear setup and troubleshooting
+
+### 3. Train Agent (`train_agent.py`)
+
+Train an aircraft control agent using PPO (Proximal Policy Optimization).
 
 **Requirements:**
 
@@ -35,28 +91,47 @@ pip install stable-baselines3
 python gymnasium_jsbsim/examples/train_agent.py
 ```
 
-**Configuration:**
+**What it demonstrates:**
+- Training with Stable-Baselines3
+- Vectorized environments for faster training
+- Model saving and evaluation
+- Optional TensorBoard logging
 
-Edit the constants at the top of the file to customize training:
+**Configuration:**
 
 ```python
 ENV_ID = "JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0"
 TOTAL_TIMESTEPS = 100_000  # Increase for better performance
 N_ENVS = 4  # Number of parallel environments
-USE_TENSORBOARD = False  # Set to True to enable TensorBoard logging
+USE_TENSORBOARD = False  # Enable TensorBoard logging
 ```
 
-**What it demonstrates:**
-- Training an agent with Stable-Baselines3
-- Using vectorized environments for faster training
-- Saving and testing a trained model
-- Basic performance evaluation
-- Optional TensorBoard logging for monitoring training progress
-
-**Expected results:**
-- Training completes in 5-15 minutes (depending on hardware)
-- Trained agent should show improved performance over random actions
+**Expected output:**
+- Training time: 5-15 minutes (hardware dependent)
 - Model saved as `ppo_aircraft_simple.zip`
+- Final test episode results
+
+**To visualize the trained model:**
+See the FlightGear visualization example in `random_agent_flightgear.py` or load the model programmatically:
+
+```python
+from stable_baselines3 import PPO
+import gymnasium as gym
+import gymnasium_jsbsim
+
+model = PPO.load("ppo_aircraft_simple")
+env = gym.make("JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-FG-v0")
+obs, info = env.reset()
+env.unwrapped.render(mode="flightgear", flightgear_blocking=True)
+
+for _ in range(100):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated, info = env.step(action)
+    env.unwrapped.render(mode="flightgear")
+    if terminated or truncated:
+        break
+env.close()
+```
 
 ## Monitoring Training Progress
 
@@ -115,15 +190,35 @@ Then open http://localhost:6006 in your browser to see:
 - Reduce `batch_size` in PPO configuration
 - Reduce `n_steps` in PPO configuration
 
+## Workflow Summary
+
+**Complete workflow from scratch:**
+
+```bash
+# 1. Check setup
+python gymnasium_jsbsim/examples/check_flightgear_setup.py
+
+# 2. Try random agent (optional)
+python gymnasium_jsbsim/examples/random_agent.py
+
+# 3. Try with FlightGear visualization (optional)
+python gymnasium_jsbsim/examples/random_agent_flightgear.py
+
+# 4. Train an agent
+python gymnasium_jsbsim/examples/train_agent.py
+
+# 5. Load and visualize trained model (see train_agent.py docs for code example)
+```
+
 ## Next Steps
 
-After training an agent, you can:
+After training an agent:
 
-1. **Visualize behavior**: Load the model and render episodes
-2. **Fine-tune**: Continue training from a checkpoint
-3. **Deploy**: Use the trained model for inference
-4. **Experiment**: Try different algorithms (SAC, TD3, A2C)
-5. **Benchmark**: Compare performance across different configurations
+1. **Visualize**: Load your model and use a FlightGear-enabled environment (see code example in `train_agent.py` section)
+2. **Fine-tune**: Continue training with `model.learn(total_timesteps=...)`
+3. **Experiment**: Try different tasks, aircraft, and reward shaping
+4. **Compare**: Train multiple models and benchmark performance
+5. **Deploy**: Use the trained model in your applications
 
 ## Additional Resources
 
