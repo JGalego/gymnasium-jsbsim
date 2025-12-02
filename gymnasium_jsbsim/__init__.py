@@ -6,7 +6,7 @@ The gymnasium_jsbsim.Envs enum stores all registered environments as members wit
 their env ID string as value. This allows convenient autocompletion and value safety.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import enum
 from typing import Dict, Tuple
