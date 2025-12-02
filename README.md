@@ -10,19 +10,20 @@ A simple example of using the Gymnasium-JSBSim environment with a random agent.
 """
 
 import gymnasium as gym
-import gymnasium_jsbsim  # pylint: disable=unused-import
+
+import gymnasium_jsbsim  # pylint: disable=unused-import  # noqa: F401
 
 # Define the maximum number of steps to run
 MAX_STEPS = 100
 
 # Create the environment
-env = gym.make('JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
+env = gym.make("JSBSim-HeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0")
 
 # Reset the environment to start
 env.reset()
 
 for step in range(MAX_STEPS):
-    # Take a random action (replace with your own policy)
+    # Take a random action
     action = env.action_space.sample()
 
     # Step the environment
@@ -30,7 +31,7 @@ for step in range(MAX_STEPS):
 
     # Print the results of the step
     done = terminated or truncated
-    print(f'Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n')
+    print(f"Step: {step}, State: {state}, Reward: {reward}, Done: {done}\n")
 
     # If the episode is done, exit the loop
     if done:
@@ -114,7 +115,7 @@ Visualising with FlightGear requires the Gymnasium to be created with a FlightGe
 env = gym.make('JSBSim-TurnHeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 ```
 
-The first call to `env.render(mode='flightgear')` will launch FlightGear and begin visualisation. 
+The first call to `env.render(mode='flightgear')` will launch FlightGear and begin visualisation.
 
 ## State and Action Space
 
@@ -150,5 +151,5 @@ Actions are 3-tuples of floats in the range [-1,+1] describing commands to move 
 ## Other Materials
 
 * Gymnasium-JBSim is a fork of [Gor-Ren's Gym-JSBSim](https://github.com/Gor-Ren/gym-jsbsim).
-* Gym-JSBSim was created as part of a MSc dissertation, which can be accessed [here](https://researchportal.bath.ac.uk/en/publications/autonomous-control-of-simulated-fixed-wing-aircraft-using-deep-re). 
+* Gym-JSBSim was created as part of a MSc dissertation, which can be accessed [here](https://researchportal.bath.ac.uk/en/publications/autonomous-control-of-simulated-fixed-wing-aircraft-using-deep-re).
 * A video montage of trained agent behaviour is available [here](https://drive.google.com/open?id=1wEq4Fg31Nf_6jb6bLLO24gt15GaZ-wbv).

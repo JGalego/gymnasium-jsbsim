@@ -1,35 +1,45 @@
 """
 JSBSim property definitions and related classes.
 """
-import math
+
+from __future__ import annotations
+
 import collections
+import math
+from typing import TYPE_CHECKING
 
 from gymnasium_jsbsim import utils
 
+if TYPE_CHECKING:
+    from gymnasium_jsbsim.simulation import Simulation
 
-class BoundedProperty(collections.namedtuple(
-        'BoundedProperty', ['name', 'description', 'min', 'max'])):
+
+class BoundedProperty(
+    collections.namedtuple("BoundedProperty", ["name", "description", "min", "max"])
+):
     """
     A property with defined minimum and maximum bounds.
     """
+
     def get_legal_name(self):
         """
         Get the property name with illegal characters translated.
-        
+
         Returns:
             Property name safe for use as Python attribute
         """
         return utils.AttributeFormatter.translate(self.name)
 
 
-class Property(collections.namedtuple('Property', ['name', 'description'])):
+class Property(collections.namedtuple("Property", ["name", "description"])):
     """
     A property without bounds.
     """
+
     def get_legal_name(self):
         """
         Get the property name with illegal characters translated.
-        
+
         Returns:
             Property name safe for use as Python attribute
         """
@@ -38,113 +48,138 @@ class Property(collections.namedtuple('Property', ['name', 'description'])):
 
 # position and attitude
 altitude_sl_ft = BoundedProperty(
-    'position/h-sl-ft', 'altitude above mean sea level [ft]', -1400, 85000)
+    "position/h-sl-ft", "altitude above mean sea level [ft]", -1400, 85000
+)
 pitch_rad = BoundedProperty(
-    'attitude/pitch-rad', 'pitch [rad]', -0.5 * math.pi, 0.5 * math.pi)
-roll_rad = BoundedProperty(
-    'attitude/roll-rad', 'roll [rad]', -math.pi, math.pi)
-heading_deg = BoundedProperty(
-    'attitude/psi-deg', 'heading [deg]', 0, 360)
-sideslip_deg = BoundedProperty(
-    'aero/beta-deg', 'sideslip [deg]', -180, +180)
+    "attitude/pitch-rad", "pitch [rad]", -0.5 * math.pi, 0.5 * math.pi
+)
+roll_rad = BoundedProperty("attitude/roll-rad", "roll [rad]", -math.pi, math.pi)
+heading_deg = BoundedProperty("attitude/psi-deg", "heading [deg]", 0, 360)
+sideslip_deg = BoundedProperty("aero/beta-deg", "sideslip [deg]", -180, +180)
 lat_geod_deg = BoundedProperty(
-    'position/lat-geod-deg', 'geocentric latitude [deg]', -90, 90)
+    "position/lat-geod-deg", "geocentric latitude [deg]", -90, 90
+)
 lng_geoc_deg = BoundedProperty(
-    'position/long-gc-deg', 'geodesic longitude [deg]', -180, 180)
+    "position/long-gc-deg", "geodesic longitude [deg]", -180, 180
+)
 dist_travel_m = Property(
-    'position/distance-from-start-mag-mt',
-    'distance travelled from starting position [m]')
+    "position/distance-from-start-mag-mt",
+    "distance travelled from starting position [m]",
+)
 
 # velocities
 u_fps = BoundedProperty(
-    'velocities/u-fps', 'body frame x-axis velocity [ft/s]', -2200, 2200)
+    "velocities/u-fps", "body frame x-axis velocity [ft/s]", -2200, 2200
+)
 v_fps = BoundedProperty(
-    'velocities/v-fps', 'body frame y-axis velocity [ft/s]', -2200, 2200)
+    "velocities/v-fps", "body frame y-axis velocity [ft/s]", -2200, 2200
+)
 w_fps = BoundedProperty(
-    'velocities/w-fps', 'body frame z-axis velocity [ft/s]', -2200, 2200)
+    "velocities/w-fps", "body frame z-axis velocity [ft/s]", -2200, 2200
+)
 v_north_fps = BoundedProperty(
-    'velocities/v-north-fps', 'velocity true north [ft/s]',
-    float('-inf'), float('+inf'))
+    "velocities/v-north-fps", "velocity true north [ft/s]", float("-inf"), float("+inf")
+)
 v_east_fps = BoundedProperty(
-    'velocities/v-east-fps', 'velocity east [ft/s]',
-    float('-inf'), float('+inf'))
+    "velocities/v-east-fps", "velocity east [ft/s]", float("-inf"), float("+inf")
+)
 v_down_fps = BoundedProperty(
-    'velocities/v-down-fps', 'velocity downwards [ft/s]',
-    float('-inf'), float('+inf'))
+    "velocities/v-down-fps", "velocity downwards [ft/s]", float("-inf"), float("+inf")
+)
 p_radps = BoundedProperty(
-    'velocities/p-rad_sec', 'roll rate [rad/s]',
-    -2 * math.pi, 2 * math.pi)
+    "velocities/p-rad_sec", "roll rate [rad/s]", -2 * math.pi, 2 * math.pi
+)
 q_radps = BoundedProperty(
-    'velocities/q-rad_sec', 'pitch rate [rad/s]',
-    -2 * math.pi, 2 * math.pi)
+    "velocities/q-rad_sec", "pitch rate [rad/s]", -2 * math.pi, 2 * math.pi
+)
 r_radps = BoundedProperty(
-    'velocities/r-rad_sec', 'yaw rate [rad/s]',
-    -2 * math.pi, 2 * math.pi)
-altitude_rate_fps = Property(
-    'velocities/h-dot-fps', 'Rate of altitude change [ft/s]')
+    "velocities/r-rad_sec", "yaw rate [rad/s]", -2 * math.pi, 2 * math.pi
+)
+altitude_rate_fps = Property("velocities/h-dot-fps", "Rate of altitude change [ft/s]")
 
 # controls state
 aileron_left = BoundedProperty(
-    'fcs/left-aileron-pos-norm', 'left aileron position, normalised', -1, 1)
+    "fcs/left-aileron-pos-norm", "left aileron position, normalised", -1, 1
+)
 aileron_right = BoundedProperty(
-    'fcs/right-aileron-pos-norm', 'right aileron position, normalised', -1, 1)
+    "fcs/right-aileron-pos-norm", "right aileron position, normalised", -1, 1
+)
 elevator = BoundedProperty(
-    'fcs/elevator-pos-norm', 'elevator position, normalised', -1, 1)
-rudder = BoundedProperty(
-    'fcs/rudder-pos-norm', 'rudder position, normalised', -1, 1)
+    "fcs/elevator-pos-norm", "elevator position, normalised", -1, 1
+)
+rudder = BoundedProperty("fcs/rudder-pos-norm", "rudder position, normalised", -1, 1)
 throttle = BoundedProperty(
-    'fcs/throttle-pos-norm', 'throttle position, normalised', 0, 1)
-gear = BoundedProperty(
-    'gear/gear-pos-norm', 'landing gear position, normalised', 0, 1)
+    "fcs/throttle-pos-norm", "throttle position, normalised", 0, 1
+)
+gear = BoundedProperty("gear/gear-pos-norm", "landing gear position, normalised", 0, 1)
 
 # engines
-engine_running = Property('propulsion/engine/set-running', 'engine running (0/1 bool)')
-all_engine_running = Property('propulsion/set-running', 'set engine running (-1 for all engines)')
-engine_thrust_lbs = Property('propulsion/engine/thrust-lbs', 'engine thrust [lb]')
+engine_running = Property("propulsion/engine/set-running", "engine running (0/1 bool)")
+all_engine_running = Property(
+    "propulsion/set-running", "set engine running (-1 for all engines)"
+)
+engine_thrust_lbs = Property("propulsion/engine/thrust-lbs", "engine thrust [lb]")
 
 # controls command
 aileron_cmd = BoundedProperty(
-    'fcs/aileron-cmd-norm', 'aileron commanded position, normalised', -1., 1.)
+    "fcs/aileron-cmd-norm", "aileron commanded position, normalised", -1.0, 1.0
+)
 elevator_cmd = BoundedProperty(
-    'fcs/elevator-cmd-norm', 'elevator commanded position, normalised', -1., 1.)
+    "fcs/elevator-cmd-norm", "elevator commanded position, normalised", -1.0, 1.0
+)
 rudder_cmd = BoundedProperty(
-    'fcs/rudder-cmd-norm', 'rudder commanded position, normalised', -1., 1.)
+    "fcs/rudder-cmd-norm", "rudder commanded position, normalised", -1.0, 1.0
+)
 throttle_cmd = BoundedProperty(
-    'fcs/throttle-cmd-norm', 'throttle commanded position, normalised', 0., 1.)
+    "fcs/throttle-cmd-norm", "throttle commanded position, normalised", 0.0, 1.0
+)
 mixture_cmd = BoundedProperty(
-    'fcs/mixture-cmd-norm', 'engine mixture setting, normalised', 0., 1.)
+    "fcs/mixture-cmd-norm", "engine mixture setting, normalised", 0.0, 1.0
+)
 throttle_1_cmd = BoundedProperty(
-    'fcs/throttle-cmd-norm[1]',
-    'throttle 1 commanded position, normalised', 0., 1.)
+    "fcs/throttle-cmd-norm[1]", "throttle 1 commanded position, normalised", 0.0, 1.0
+)
 mixture_1_cmd = BoundedProperty(
-    'fcs/mixture-cmd-norm[1]',
-    'engine mixture 1 setting, normalised', 0., 1.)
+    "fcs/mixture-cmd-norm[1]", "engine mixture 1 setting, normalised", 0.0, 1.0
+)
 gear_all_cmd = BoundedProperty(
-    'gear/gear-cmd-norm', 'all landing gear commanded position, normalised', 0, 1)
+    "gear/gear-cmd-norm", "all landing gear commanded position, normalised", 0, 1
+)
 
 # simulation
-sim_dt = Property('simulation/dt', 'JSBSim simulation timestep [s]')
-sim_time_s = Property('simulation/sim-time-sec', 'Simulation time [s]')
+sim_dt = Property("simulation/dt", "JSBSim simulation timestep [s]")
+sim_time_s = Property("simulation/sim-time-sec", "Simulation time [s]")
 
 # initial conditions
-initial_altitude_ft = Property('ic/h-sl-ft', 'initial altitude MSL [ft]')
-initial_terrain_altitude_ft = Property('ic/terrain-elevation-ft', 'initial terrain alt [ft]')
-initial_longitude_geoc_deg = Property('ic/long-gc-deg', 'initial geocentric longitude [deg]')
-initial_latitude_geod_deg = Property('ic/lat-geod-deg', 'initial geodesic latitude [deg]')
-initial_u_fps = Property('ic/u-fps', 'body frame x-axis velocity; positive forward [ft/s]')
-initial_v_fps = Property('ic/v-fps', 'body frame y-axis velocity; positive right [ft/s]')
-initial_w_fps = Property('ic/w-fps', 'body frame z-axis velocity; positive down [ft/s]')
-initial_p_radps = Property('ic/p-rad_sec', 'roll rate [rad/s]')
-initial_q_radps = Property('ic/q-rad_sec', 'pitch rate [rad/s]')
-initial_r_radps = Property('ic/r-rad_sec', 'yaw rate [rad/s]')
-initial_roc_fpm = Property('ic/roc-fpm', 'initial rate of climb [ft/min]')
-initial_heading_deg = Property('ic/psi-true-deg', 'initial (true) heading [deg]')
+initial_altitude_ft = Property("ic/h-sl-ft", "initial altitude MSL [ft]")
+initial_terrain_altitude_ft = Property(
+    "ic/terrain-elevation-ft", "initial terrain alt [ft]"
+)
+initial_longitude_geoc_deg = Property(
+    "ic/long-gc-deg", "initial geocentric longitude [deg]"
+)
+initial_latitude_geod_deg = Property(
+    "ic/lat-geod-deg", "initial geodesic latitude [deg]"
+)
+initial_u_fps = Property(
+    "ic/u-fps", "body frame x-axis velocity; positive forward [ft/s]"
+)
+initial_v_fps = Property(
+    "ic/v-fps", "body frame y-axis velocity; positive right [ft/s]"
+)
+initial_w_fps = Property("ic/w-fps", "body frame z-axis velocity; positive down [ft/s]")
+initial_p_radps = Property("ic/p-rad_sec", "roll rate [rad/s]")
+initial_q_radps = Property("ic/q-rad_sec", "pitch rate [rad/s]")
+initial_r_radps = Property("ic/r-rad_sec", "yaw rate [rad/s]")
+initial_roc_fpm = Property("ic/roc-fpm", "initial rate of climb [ft/min]")
+initial_heading_deg = Property("ic/psi-true-deg", "initial (true) heading [deg]")
 
 
 class Vector2:
     """
     2D vector with heading calculation capability.
     """
+
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
@@ -152,7 +187,7 @@ class Vector2:
     def heading_deg(self):
         """
         Calculate heading in degrees of vector from origin.
-        
+
         Returns:
             Heading in degrees [0, 360)
         """
@@ -161,13 +196,13 @@ class Vector2:
         return heading_deg_normalised
 
     @staticmethod
-    def from_sim(sim: 'simulation.Simulation') -> 'Vector2':
+    def from_sim(sim: "Simulation") -> "Vector2":
         """
         Create a Vector2 from simulation velocity components.
-        
+
         Args:
             sim: Simulation instance
-            
+
         Returns:
             Vector2 with east and north velocity components
         """
@@ -178,17 +213,18 @@ class GeodeticPosition:
     """
     Geographic position with latitude and longitude.
     """
+
     def __init__(self, latitude_deg: float, longitude_deg: float):
         self.lat = latitude_deg
         self.lon = longitude_deg
 
-    def heading_deg_to(self, destination: 'GeodeticPosition') -> float:
+    def heading_deg_to(self, destination: "GeodeticPosition") -> float:
         """
         Determines heading in degrees of course between self and destination.
-        
+
         Args:
             destination: Target position
-            
+
         Returns:
             Heading in degrees
         """
@@ -196,13 +232,13 @@ class GeodeticPosition:
         return difference_vector.heading_deg()
 
     @staticmethod
-    def from_sim(sim: 'simulation.Simulation') -> 'GeodeticPosition':
+    def from_sim(sim: "Simulation") -> "GeodeticPosition":
         """
         Return a GeodeticPosition object with lat and lon from simulation.
-        
+
         Args:
             sim: Simulation instance
-            
+
         Returns:
             GeodeticPosition with current lat/lon
         """
@@ -213,10 +249,10 @@ class GeodeticPosition:
     def __sub__(self, other) -> Vector2:
         """
         Returns difference between two coords as (delta_lon, delta_lat).
-        
+
         Args:
             other: Another GeodeticPosition
-            
+
         Returns:
             Vector2 with longitude and latitude differences
         """

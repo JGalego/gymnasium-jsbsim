@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "numpy>=2.3.4",
+    "numpy>=2.2.6",
     "gymnasium>=1.2.2",
     "matplotlib>=3.10.7",
     "jsbsim>=1.2.3",

@@ -1,18 +1,21 @@
 """
 Functional integration tests.
 """
-import unittest
-import numpy as np
-import gymnasium as gym
 
-from gymnasium_jsbsim import constants, utils, get_env_id_kwargs_map
+import unittest
+
+import gymnasium as gym
+import numpy as np
+
+import gymnasium_jsbsim.properties as prp
+from gymnasium_jsbsim import constants, get_env_id_kwargs_map
 from gymnasium_jsbsim.agents import RandomAgent
 from gymnasium_jsbsim.environment import JsbSimEnv
 from gymnasium_jsbsim.tasks import HeadingControlTask
-import gymnasium_jsbsim.properties as prp
+
 
 class AgentEnvInteractionTest(unittest.TestCase):
-    """ Tests for agents interacting with env. """
+    """Tests for agents interacting with env."""
 
     def init_and_reset_env(self, env: JsbSimEnv):
         self.assertIsInstance(env.unwrapped.task, HeadingControlTask)
@@ -55,11 +58,19 @@ class AgentEnvInteractionTest(unittest.TestCase):
 
         # we see the state has changed
         self.assertEqual(first_state.shape, state.shape)
-        self.assertTrue(np.any(np.not_equal(first_state, state)),
-                        msg='state should have changed after simulation step')
-        expected_time_step_size = env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ
-        self.assertAlmostEqual(expected_time_step_size, env.unwrapped.sim.get_sim_time())
-        self.assertFalse(terminated or truncated, msg='episode is terminal after only a single step')
+        self.assertTrue(
+            np.any(np.not_equal(first_state, state)),
+            msg="state should have changed after simulation step",
+        )
+        expected_time_step_size = (
+            env.unwrapped.sim_steps_per_agent_step / constants.JSBSIM_DT_HZ
+        )
+        self.assertAlmostEqual(
+            expected_time_step_size, env.unwrapped.sim.get_sim_time()
+        )
+        self.assertFalse(
+            terminated or truncated, msg="episode is terminal after only a single step"
+        )
 
         # the aircraft engines are running, as per initial conditions
         self.assertNotAlmostEqual(env.unwrapped.sim[prp.engine_thrust_lbs], 0)
