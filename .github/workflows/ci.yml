@@ -92,7 +92,7 @@ jobs:
       run: |
         isort --check-only --profile black gymnasium_jsbsim/
 
-    - name: Run mypy
-      run: |
-        mypy gymnasium_jsbsim/ --ignore-missing-imports --check-untyped-defs
-      continue-on-error: true  # Don't fail CI on mypy errors initially
+    # - name: Run mypy
+    #   run: |
+    #     mypy gymnasium_jsbsim/ --ignore-missing-imports --check-untyped-defs
+    #   continue-on-error: true  # Don't fail CI on mypy errors initially

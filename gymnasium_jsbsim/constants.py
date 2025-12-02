@@ -13,9 +13,9 @@ JSBSIM_DT_HZ = 60  # JSBSim integration frequency in Hz
 # ============================================================================
 # Simulation Class Constants
 # ============================================================================
-OUTPUT_FILE = 'flightgear.xml'
-LONGITUDINAL = 'longitudinal'
-FULL = 'full'
+OUTPUT_FILE = "flightgear.xml"
+LONGITUDINAL = "longitudinal"
+FULL = "full"
 
 # ============================================================================
 # Aircraft Constants
@@ -51,13 +51,13 @@ POTENTIAL_BASED_DIFFERENCE_TERMINAL_VALUE = 0.0
 PLOT_PAUSE_SECONDS = 0.0001
 LABEL_TEXT_KWARGS = {
     "fontsize": 18,
-    "horizontalalignment": 'right',
-    "verticalalignment": 'baseline'
+    "horizontalalignment": "right",
+    "verticalalignment": "baseline",
 }
 VALUE_TEXT_KWARGS = {
     "fontsize": 18,
-    "horizontalalignment": 'left',
-    "verticalalignment": 'baseline'
+    "horizontalalignment": "left",
+    "verticalalignment": "baseline",
 }
 TEXT_X_POSN_LABEL = 0.8
 TEXT_X_POSN_VALUE = 0.9
@@ -66,12 +66,12 @@ TEXT_Y_INCREMENT = -0.1
 
 
 # FlightGearVisualiser
-FG_TYPE = 'socket'
-FG_DIRECTION = 'in'
+FG_TYPE = "socket"
+FG_DIRECTION = "in"
 FG_RATE = 60
-FG_SERVER = ''
+FG_SERVER = ""
 FG_PORT = 5550
-FG_PROTOCOL = 'udp'
-FG_LOADED_MESSAGE = 'loading cities done'
+FG_PROTOCOL = "udp"
+FG_LOADED_MESSAGE = "loading cities done"
 FG_TIME_FACTOR = 1  # sim speed relative to realtime, higher is faster
-FG_TIME = 'dusk'
+FG_TIME = "dusk"

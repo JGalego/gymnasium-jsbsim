@@ -9,11 +9,10 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Union
 
 import gymnasium_jsbsim.properties as prp
-
 from gymnasium_jsbsim import constants
 from gymnasium_jsbsim.utils import reduce_reflex_angle_deg
 
-State = 'tasks.FlightTask.State'  # pylint: disable=invalid-name
+State = "tasks.FlightTask.State"  # pylint: disable=invalid-name
 
 
 class Reward:
@@ -32,27 +31,29 @@ class Reward:
         self.base_reward_elements = base_reward_elements
         self.shaping_reward_elements = shaping_reward_elements
         if not self.base_reward_elements:
-            raise ValueError('base agent_reward cannot be empty')
+            raise ValueError("base agent_reward cannot be empty")
 
     def agent_reward(self) -> float:
         """
         Returns scalar reward value by taking mean of all reward elements.
-        
+
         Returns:
             Mean of all reward components (base + shaping)
         """
         sum_reward = sum(self.base_reward_elements) + sum(self.shaping_reward_elements)
-        num_reward_components = len(self.base_reward_elements) + len(self.shaping_reward_elements)
+        num_reward_components = len(self.base_reward_elements) + len(
+            self.shaping_reward_elements
+        )
         return sum_reward / num_reward_components
 
     def assessment_reward(self) -> float:
-        """ Returns scalar non-shaping reward by taking mean of base reward elements. """
+        """Returns scalar non-shaping reward by taking mean of base reward elements."""
         return sum(self.base_reward_elements) / len(self.base_reward_elements)
 
     def is_shaping(self):
         """
         Check if this reward includes shaping components.
-        
+
         Returns:
             True if shaping components are present, False otherwise
         """
@@ -89,12 +90,14 @@ class NormalisedComponent(RewardComponent, ABC):
     """
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def __init__(self,
-                 name: str,
-                 prop: prp.BoundedProperty,
-                 state_variables: Tuple[prp.BoundedProperty],
-                 target: Union[int, float, prp.Property, prp.BoundedProperty],
-                 potential_difference_based: bool):
+    def __init__(
+        self,
+        name: str,
+        prop: prp.BoundedProperty,
+        state_variables: Tuple[prp.BoundedProperty],
+        target: Union[int, float, prp.Property, prp.BoundedProperty],
+        potential_difference_based: bool,
+    ):
         """
         Constructor.
 
@@ -112,8 +115,11 @@ class NormalisedComponent(RewardComponent, ABC):
         self.potential_difference_based = potential_difference_based
         self._set_target(target, state_variables)
 
-    def _set_target(self, target: Union[int, float, prp.Property, prp.BoundedProperty],
-                    state_variables: Tuple[prp.BoundedProperty]) -> None:
+    def _set_target(
+        self,
+        target: Union[int, float, prp.Property, prp.BoundedProperty],
+        state_variables: Tuple[prp.BoundedProperty],
+    ) -> None:
         """
         Sets the target value or an index for retrieving it from States
 
@@ -138,7 +144,9 @@ class NormalisedComponent(RewardComponent, ABC):
         """
         if self.potential_difference_based:
             # Reward is a potential difference of state, prev_state
-            reward = self.get_potential(state, is_terminal) - self.get_potential(prev_state, False)
+            reward = self.get_potential(state, is_terminal) - self.get_potential(
+                prev_state, False
+            )
         else:
             reward = self.get_potential(state, is_terminal)
         return reward
@@ -203,13 +211,15 @@ class AsymptoticErrorComponent(ErrorComponent):
     """
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def __init__(self,
-                 name: str,
-                 prop: prp.BoundedProperty,
-                 state_variables: Tuple[prp.BoundedProperty],
-                 target: Union[int, float, prp.Property, prp.BoundedProperty],
-                 is_potential_based: bool,
-                 scaling_factor: Union[float, int]):
+    def __init__(
+        self,
+        name: str,
+        prop: prp.BoundedProperty,
+        state_variables: Tuple[prp.BoundedProperty],
+        target: Union[int, float, prp.Property, prp.BoundedProperty],
+        is_potential_based: bool,
+        scaling_factor: Union[float, int],
+    ):
         """
         Constructor.
 
@@ -259,13 +269,15 @@ class LinearErrorComponent(ErrorComponent):
     """
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def __init__(self,
-                 name: str,
-                 prop: prp.BoundedProperty,
-                 state_variables: Tuple[prp.BoundedProperty],
-                 target: Union[int, float, prp.Property, prp.BoundedProperty],
-                 is_potential_based: bool,
-                 scaling_factor: Union[float, int]):
+    def __init__(
+        self,
+        name: str,
+        prop: prp.BoundedProperty,
+        state_variables: Tuple[prp.BoundedProperty],
+        target: Union[int, float, prp.Property, prp.BoundedProperty],
+        is_potential_based: bool,
+        scaling_factor: Union[float, int],
+    ):
         """
         Constructor.
 
@@ -290,8 +302,9 @@ def normalise_error_asymptotic(absolute_error: float, scaling_factor: float) -> 
     When absolute_error == scaling_factor, the normalised error is equal to 0.5
     """
     if absolute_error < 0:
-        raise ValueError('Error to be normalised must be non-negative '
-                         f': {absolute_error}')
+        raise ValueError(
+            "Error to be normalised must be non-negative " f": {absolute_error}"
+        )
     scaled_error = absolute_error / scaling_factor
     return scaled_error / (scaled_error + 1)
 
@@ -303,8 +316,9 @@ def normalise_error_linear(absolute_error: float, max_error: float) -> float:
     If absolute_error exceeds max_error, it is capped back to max_error
     """
     if absolute_error < 0:
-        raise ValueError('Error to be normalised must be non-negative '
-                         f': {absolute_error}')
+        raise ValueError(
+            "Error to be normalised must be non-negative " f": {absolute_error}"
+        )
     if absolute_error > max_error:
         return 1.0
     return absolute_error / max_error
@@ -312,6 +326,7 @@ def normalise_error_linear(absolute_error: float, max_error: float) -> float:
 
 class RewardStub(Reward):
     """Test stub for Reward class."""
+
     def __init__(self, agent_reward_value: float, assessment_reward_value: float):
         # Don't call parent __init__ since stub doesn't use base_reward_elements
         # pylint: disable=super-init-not-called

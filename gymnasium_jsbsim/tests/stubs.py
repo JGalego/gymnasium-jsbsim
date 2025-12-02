@@ -1,16 +1,17 @@
 """
 Test stubs and fixtures.
 """
+
 import collections
 import copy
+from typing import Dict, Iterable, NamedTuple, Tuple
 
-from gymnasium_jsbsim import constants, rewards
-from gymnasium_jsbsim.tasks import FlightTask
-from gymnasium_jsbsim.rewards import State, Reward, RewardComponent
-from gymnasium_jsbsim.assessors import Assessor
-from gymnasium_jsbsim.simulation import Simulation
 import gymnasium_jsbsim.properties as prp
-from typing import Tuple, NamedTuple, Iterable, Dict
+from gymnasium_jsbsim import constants, rewards
+from gymnasium_jsbsim.assessors import Assessor
+from gymnasium_jsbsim.rewards import Reward, RewardComponent, State
+from gymnasium_jsbsim.simulation import Simulation
+from gymnasium_jsbsim.tasks import FlightTask
 
 
 class AssessorStub(Assessor):
@@ -22,9 +23,14 @@ class AssessorStub(Assessor):
 
 
 class FlightTaskStub(FlightTask):
-    """ A minimal Task for testing. """
-    test_property1 = prp.BoundedProperty('test_property1', 'dummy property for testing', -1, 1)
-    test_property2 = prp.BoundedProperty('test_property2', 'dummy property for testing', -1, 1)
+    """A minimal Task for testing."""
+
+    test_property1 = prp.BoundedProperty(
+        "test_property1", "dummy property for testing", -1, 1
+    )
+    test_property2 = prp.BoundedProperty(
+        "test_property2", "dummy property for testing", -1, 1
+    )
 
     def __init__(self, *_):
         self.state_variables = (self.test_property1, self.test_property2)
@@ -38,7 +44,7 @@ class FlightTaskStub(FlightTask):
         return self.base_initial_conditions
 
     def get_state(self, value1: float, value2: float):
-        """ Returns a State of this class' test properties populated with input values """
+        """Returns a State of this class' test properties populated with input values"""
         return self.State(value1, value2)
 
     def get_props_to_output(self) -> Tuple:
@@ -46,19 +52,26 @@ class FlightTaskStub(FlightTask):
 
     @staticmethod
     def get_dummy_state_class_and_properties(length: int):
-        dummy_properties = tuple(prp.Property('test_prop' + str(i), '') for i in range(length))
-        DummyState = collections.namedtuple('DummyState', [prop.name for prop in dummy_properties])
+        dummy_properties = tuple(
+            prp.Property("test_prop" + str(i), "") for i in range(length)
+        )
+        DummyState = collections.namedtuple(
+            "DummyState", [prop.name for prop in dummy_properties]
+        )
         return DummyState, dummy_properties
 
     @staticmethod
-    def get_dummy_state_and_properties(values: Iterable[float]) -> Tuple[
-        NamedTuple, Tuple[prp.Property, ...]]:
+    def get_dummy_state_and_properties(
+        values: Iterable[float],
+    ) -> Tuple[NamedTuple, Tuple[prp.Property, ...]]:
         """
         given a collection of floats, creates dummy Properties for each value
         and inits a State
         """
         values_safe = tuple(values)
-        DummyState, props = FlightTaskStub.get_dummy_state_class_and_properties(len(values_safe))
+        DummyState, props = FlightTaskStub.get_dummy_state_class_and_properties(
+            len(values_safe)
+        )
         return DummyState(*values_safe), props
 
     def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation):
@@ -66,7 +79,7 @@ class FlightTaskStub(FlightTask):
 
 
 class BasicFlightTask(FlightTask):
-    """ A Task with basic but realistic state and action space. """
+    """A Task with basic but realistic state and action space."""
 
     def __init__(self, *_):
         self.state_variables = super().base_state_variables
@@ -82,7 +95,9 @@ class BasicFlightTask(FlightTask):
     def get_props_to_output(self) -> Tuple:
         return prp.u_fps, prp.altitude_sl_ft, prp.heading_deg
 
-    def _reward_terminal_override(self, reward: rewards.Reward, sim: Simulation) -> bool:
+    def _reward_terminal_override(
+        self, reward: rewards.Reward, sim: Simulation
+    ) -> bool:
         return False
 
 
@@ -101,7 +116,7 @@ class SimStub:
         self[prp.gear_all_cmd] = 0.0
 
     def get_sim_time(self) -> float:
-        """ Gets the simulation time from JSBSim, a float. """
+        """Gets the simulation time from JSBSim, a float."""
         return self[prp.sim_time_s]
 
     def __setitem__(self, prop: prp.Property, value: float):
@@ -141,12 +156,16 @@ class SimStub:
             typical_value = (prop.min + prop.max) / 2
             sim[prop] = typical_value
         sim[prp.sim_time_s] = 1.0
-        sim[prp.lat_geod_deg] = task.get_initial_conditions()[prp.initial_latitude_geod_deg]
-        sim[prp.lng_geoc_deg] = task.get_initial_conditions()[prp.initial_longitude_geoc_deg]
+        sim[prp.lat_geod_deg] = task.get_initial_conditions()[
+            prp.initial_latitude_geod_deg
+        ]
+        sim[prp.lng_geoc_deg] = task.get_initial_conditions()[
+            prp.initial_longitude_geoc_deg
+        ]
         sim[prp.dist_travel_m] = 2.0
         sim[prp.heading_deg] = 270
         sim[prp.v_north_fps] = 0
-        sim[prp.v_east_fps] = -200.  # corresp. to travel at track 270 deg
+        sim[prp.v_east_fps] = -200.0  # corresp. to travel at track 270 deg
         sim[prp.altitude_sl_ft] = constants.INITIAL_ALTITUDE_FT
         return sim
 
@@ -202,7 +221,8 @@ class DefaultSimStub:
 
 
 class ConstantRewardComponentStub(RewardComponent):
-    """ A RewardComponent which always returns a constant value """
+    """A RewardComponent which always returns a constant value"""
+
     default_return = 1.0
 
     def __init__(self, return_value: float = default_return):

@@ -5,7 +5,6 @@ Utility functions and classes for gymnasium-jsbsim.
 import functools
 import operator
 import shutil
-
 from typing import Iterable
 
 
@@ -15,18 +14,19 @@ class AttributeFormatter:  # pylint: disable=too-few-public-methods
 
     Used through its static method, translate()
     """
-    ILLEGAL_CHARS = '\\-/.'
-    TRANSLATE_TO = '_' * len(ILLEGAL_CHARS)
+
+    ILLEGAL_CHARS = "\\-/."
+    TRANSLATE_TO = "_" * len(ILLEGAL_CHARS)
     TRANSLATION_TABLE = str.maketrans(ILLEGAL_CHARS, TRANSLATE_TO)
 
     @staticmethod
     def translate(string: str):
         """
         Translate illegal attribute characters to underscores.
-        
+
         Args:
             string: Input string to translate
-            
+
         Returns:
             Translated string
         """
@@ -37,7 +37,7 @@ def is_flightgear_installed() -> bool:
     """
     Returns True if FlightGear is installed on the system else False.
     """
-    return shutil.which('fgfs') is not None
+    return shutil.which("fgfs") is not None
 
 
 def get_env_id(task_type, aircraft, shaping, enable_flightgear) -> str:
@@ -50,15 +50,15 @@ def get_env_id(task_type, aircraft, shaping, enable_flightgear) -> str:
         shaping: HeadingControlTask.Shaping enum, the reward shaping setting
         enable_flightgear: True if FlightGear simulator is enabled for
             visualisation else False
-            
+
     Returns:
         Environment ID string
     """
     if enable_flightgear:
-        fg_setting = 'FG'
+        fg_setting = "FG"
     else:
-        fg_setting = 'NoFG'
-    return f'JSBSim-{task_type.__name__}-{aircraft.name}-{shaping}-{fg_setting}-v0'
+        fg_setting = "NoFG"
+    return f"JSBSim-{task_type.__name__}-{aircraft.name}-{shaping}-{fg_setting}-v0"
 
 
 def product(iterable: Iterable):
@@ -67,10 +67,10 @@ def product(iterable: Iterable):
 
     ATTRIBUTION: code provided by Raymond Hettinger on SO
     https://stackoverflow.com/questions/595374/whats-the-function-like-sum-but-for-multiplication-product
-    
+
     Args:
         iterable: Iterable of numbers to multiply
-        
+
     Returns:
         Product of all elements
     """
@@ -80,13 +80,13 @@ def product(iterable: Iterable):
 def reduce_reflex_angle_deg(angle: float) -> float:
     """
     Given an angle in degrees, normalises in [-179, 180].
-    
+
     ATTRIBUTION: solution from James Polk on SO,
     https://stackoverflow.com/questions/2320986/easy-way-to-keeping-angles-between-179-and-180-degrees#
-    
+
     Args:
         angle: Angle in degrees
-        
+
     Returns:
         Normalized angle in range [-179, 180]
     """

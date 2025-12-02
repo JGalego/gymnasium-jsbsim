@@ -1,9 +1,12 @@
 """
 Tests for agent implementations.
 """
+
 import unittest
+
 import numpy as np
-from gymnasium_jsbsim.agents import RandomAgent, ConstantAgent
+
+from gymnasium_jsbsim.agents import ConstantAgent, RandomAgent
 from gymnasium_jsbsim.tests.stubs import FlightTaskStub
 
 

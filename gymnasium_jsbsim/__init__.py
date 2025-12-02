@@ -15,11 +15,7 @@ import gymnasium.envs.registration
 
 from gymnasium_jsbsim import utils
 from gymnasium_jsbsim.aircraft import a320, cessna172P, f15
-from gymnasium_jsbsim.tasks import (
-    HeadingControlTask,
-    Shaping,
-    TurnHeadingControlTask,
-)
+from gymnasium_jsbsim.tasks import HeadingControlTask, Shaping, TurnHeadingControlTask
 
 
 def get_env_id_kwargs_map() -> Dict[str, Tuple]:

@@ -4,6 +4,7 @@ Gymnasium environment wrappers for JSBSim flight simulation.
 This module provides Env-compliant interfaces to JSBSim for reinforcement
 learning applications, with optional FlightGear visualization support.
 """
+
 from typing import Dict, Tuple, Type, Union
 
 import gymnasium as gym
@@ -16,6 +17,7 @@ from gymnasium_jsbsim.tasks import HeadingControlTask, Shaping
 from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
 
 JSBSIM_DT_HZ: int = int(constants.JSBSIM_DT_HZ)  # JSBSim integration frequency
+
 
 class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
     """
@@ -30,10 +32,15 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
     docstrings have been adapted or copied from the Gymnasium source code.
     """
 
-    metadata = {'render_modes': ['human', 'flightgear']}
+    metadata = {"render_modes": ["human", "flightgear"]}
 
-    def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
-                 agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
+    def __init__(
+        self,
+        task_type: Type[HeadingControlTask],
+        aircraft: Aircraft = cessna172P,
+        agent_interaction_freq: int = 5,
+        shaping: Shaping = Shaping.STANDARD,
+    ):
         """
         Initializes some internal state, but JsbSimEnv.reset() must be
         called first before interacting with environment.
@@ -46,11 +53,15 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
             shaping to use (see HeadingControlTask for options)
         """
         if agent_interaction_freq > constants.JSBSIM_DT_HZ:
-            raise ValueError('agent interaction frequency must be less than '
-                             'or equal to JSBSim integration frequency of '
-                             f'{constants.JSBSIM_DT_HZ} Hz.')
+            raise ValueError(
+                "agent interaction frequency must be less than "
+                "or equal to JSBSim integration frequency of "
+                f"{constants.JSBSIM_DT_HZ} Hz."
+            )
         self.sim: Simulation = None
-        self.sim_steps_per_agent_step: int = int(constants.JSBSIM_DT_HZ / agent_interaction_freq)
+        self.sim_steps_per_agent_step: int = int(
+            constants.JSBSIM_DT_HZ / agent_interaction_freq
+        )
         self.aircraft = aircraft
         self.task = task_type(shaping, agent_interaction_freq, aircraft)
         # Set Space objects
@@ -77,7 +88,7 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
             info: auxiliary information, e.g. full reward shaping data
         """
         if not action.shape == self.action_space.shape:
-            raise ValueError('mismatch between action and action space size')
+            raise ValueError("mismatch between action and action space size")
 
         state, reward, terminated, truncated, info = self.task.task_step(
             self.sim, action, self.sim_steps_per_agent_step
@@ -99,7 +110,9 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         if self.sim:
             self.sim.reinitialise(init_conditions)
         else:
-            self.sim = self._init_new_sim(constants.JSBSIM_DT_HZ, self.aircraft, init_conditions)
+            self.sim = self._init_new_sim(
+                constants.JSBSIM_DT_HZ, self.aircraft, init_conditions
+            )
 
         state = self.task.observe_first_state(self.sim)
 
@@ -111,11 +124,11 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         return obs, {}
 
     def _init_new_sim(self, dt, aircraft, initial_conditions):
-        return Simulation(sim_frequency_hz=dt,
-                          aircraft=aircraft,
-                          init_conditions=initial_conditions)
+        return Simulation(
+            sim_frequency_hz=dt, aircraft=aircraft, init_conditions=initial_conditions
+        )
 
-    def render(self, mode='flightgear', flightgear_blocking=True):
+    def render(self, mode="flightgear", flightgear_blocking=True):
         """Renders the environment.
 
         The set of supported modes varies per environment. (And some
@@ -139,22 +152,23 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         :param flightgear_blocking: waits for FlightGear to load before
             returning if True, else returns immediately
         """
-        if mode == 'human':
+        if mode == "human":
             if not self.figure_visualiser:
-                self.figure_visualiser = FigureVisualiser(self.sim,
-                                                          self.task.get_props_to_output())
+                self.figure_visualiser = FigureVisualiser(
+                    self.sim, self.task.get_props_to_output()
+                )
             self.figure_visualiser.plot(self.sim)
-        elif mode == 'flightgear':
+        elif mode == "flightgear":
             if not self.flightgear_visualiser:
-                self.flightgear_visualiser = FlightGearVisualiser(self.sim,
-                                                                  self.task.get_props_to_output(),
-                                                                  flightgear_blocking)
+                self.flightgear_visualiser = FlightGearVisualiser(
+                    self.sim, self.task.get_props_to_output(), flightgear_blocking
+                )
             self.flightgear_visualiser.plot(self.sim)
         else:
             super().render()
 
     def close(self):
-        """ Cleans up this environment's objects
+        """Cleans up this environment's objects
 
         Environments automatically close() when garbage collected or when the
         program exits.
@@ -192,10 +206,16 @@ class NoFGJsbSimEnv(JsbSimEnv):
     to open a new socket for every single episode, eventually leading to
     failure of the network.
     """
-    metadata = {'render_modes': ['human']}
 
-    def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
-                 agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
+    metadata = {"render_modes": ["human"]}
+
+    def __init__(
+        self,
+        task_type: Type[HeadingControlTask],
+        aircraft: Aircraft = cessna172P,
+        agent_interaction_freq: int = 5,
+        shaping: Shaping = Shaping.STANDARD,
+    ):
         """
         Constructor. Inits some internal state, but JsbSimEnv.reset() must be
         called first before interacting with environment.
@@ -226,7 +246,7 @@ class NoFGJsbSimEnv(JsbSimEnv):
             info: auxiliary information, e.g. full reward shaping data
         """
         if not action.shape == self.action_space.shape:
-            raise ValueError('mismatch between action and action space size')
+            raise ValueError("mismatch between action and action space size")
 
         state, reward, terminated, truncated, info = self.task.task_step(
             self.sim, action, self.sim_steps_per_agent_step
@@ -236,7 +256,9 @@ class NoFGJsbSimEnv(JsbSimEnv):
         return obs, reward, terminated, truncated, info
 
     # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
-    def reset(self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None):
+    def reset(
+        self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None
+    ):
         """
         Resets the environment and returns an initial observation and info.
 
@@ -246,7 +268,9 @@ class NoFGJsbSimEnv(JsbSimEnv):
         if self.sim:
             self.sim.reinitialise(init_conditions)
         else:
-            self.sim = self._init_new_sim(constants.JSBSIM_DT_HZ, self.aircraft, init_conditions)
+            self.sim = self._init_new_sim(
+                constants.JSBSIM_DT_HZ, self.aircraft, init_conditions
+            )
 
         state = self.task.observe_first_state(self.sim)
 
@@ -258,12 +282,14 @@ class NoFGJsbSimEnv(JsbSimEnv):
         return obs, {}
 
     def _init_new_sim(self, dt: float, aircraft: Aircraft, initial_conditions: Dict):
-        return Simulation(sim_frequency_hz=dt,
-                          aircraft=aircraft,
-                          init_conditions=initial_conditions,
-                          allow_flightgear_output=False)
+        return Simulation(
+            sim_frequency_hz=dt,
+            aircraft=aircraft,
+            init_conditions=initial_conditions,
+            allow_flightgear_output=False,
+        )
 
-    def render(self, mode='human', flightgear_blocking=True):
+    def render(self, mode="human", flightgear_blocking=True):
         """
         Renders the environment.
 
@@ -271,13 +297,14 @@ class NoFGJsbSimEnv(JsbSimEnv):
         :param flightgear_blocking: waits for FlightGear to load before
             returning if True, else returns immediately
         """
-        if mode == 'human':
+        if mode == "human":
             if not self.figure_visualiser:
-                self.figure_visualiser = FigureVisualiser(self.sim,
-                                                          self.task.get_props_to_output())
+                self.figure_visualiser = FigureVisualiser(
+                    self.sim, self.task.get_props_to_output()
+                )
             self.figure_visualiser.plot(self.sim)
-        elif mode == 'flightgear':
-            raise ValueError('flightgear rendering is disabled for this class')
+        elif mode == "flightgear":
+            raise ValueError("flightgear rendering is disabled for this class")
         else:
             super().render(mode, flightgear_blocking)
 

@@ -1,13 +1,16 @@
 """
 Tests for simulation wrapper.
 """
-import unittest
-import jsbsim
+
 import multiprocessing
 import time
-from gymnasium_jsbsim.simulation import Simulation
-from gymnasium_jsbsim import aircraft
+import unittest
+
+import jsbsim
+
 import gymnasium_jsbsim.properties as prp
+from gymnasium_jsbsim import aircraft
+from gymnasium_jsbsim.simulation import Simulation
 
 
 class TestSimulation(unittest.TestCase):
@@ -22,9 +25,11 @@ class TestSimulation(unittest.TestCase):
         self.sim = None
 
     def test_init_jsbsim(self):
-        self.assertIsInstance(self.sim.jsbsim, jsbsim.FGFDMExec,
-                              msg='Expected Simulation.jsbsim to hold an '
-                              'instance of JSBSim.')
+        self.assertIsInstance(
+            self.sim.jsbsim,
+            jsbsim.FGFDMExec,
+            msg="Expected Simulation.jsbsim to hold an " "instance of JSBSim.",
+        )
 
     def test_load_model(self):
         plane = aircraft.a320
@@ -32,12 +37,15 @@ class TestSimulation(unittest.TestCase):
         self.sim = Simulation(aircraft=plane)
         actual_name = self.sim.get_loaded_model_name()
 
-        self.assertEqual(plane.jsbsim_id, actual_name,
-                         msg='Unexpected aircraft model name after loading.')
+        self.assertEqual(
+            plane.jsbsim_id,
+            actual_name,
+            msg="Unexpected aircraft model name after loading.",
+        )
 
     def test_load_bad_aircraft_id(self):
-        bad_name = 'qwertyuiop'
-        bad_aircraft = aircraft.Aircraft(bad_name, '', '', 100.)
+        bad_name = "qwertyuiop"
+        bad_aircraft = aircraft.Aircraft(bad_name, "", "", 100.0)
 
         with self.assertRaises(RuntimeError):
             self.sim = None
@@ -89,11 +97,16 @@ class TestSimulation(unittest.TestCase):
         if self.sim:
             self.sim.close()
         sim_frequency = 2
-        self.sim = Simulation(sim_frequency_hz=sim_frequency, aircraft=plane, init_conditions=None)
+        self.sim = Simulation(
+            sim_frequency_hz=sim_frequency, aircraft=plane, init_conditions=None
+        )
 
-        self.assertEqual(self.sim.get_loaded_model_name(), plane.jsbsim_id,
-                         msg='JSBSim did not load expected aircraft model: ' +
-                         self.sim.get_loaded_model_name())
+        self.assertEqual(
+            self.sim.get_loaded_model_name(),
+            plane.jsbsim_id,
+            msg="JSBSim did not load expected aircraft model: "
+            + self.sim.get_loaded_model_name(),
+        )
 
         # check that properties are as we expected them to be
         expected_values = {
@@ -103,7 +116,7 @@ class TestSimulation(unittest.TestCase):
             prp.u_fps: 328.0,
             prp.v_fps: 0.0,
             prp.w_fps: 0.0,
-            prp.BoundedProperty('simulation/dt', '', None, None): 1 / sim_frequency
+            prp.BoundedProperty("simulation/dt", "", None, None): 1 / sim_frequency,
         }
 
         for prop, expected in expected_values.items():
@@ -111,7 +124,7 @@ class TestSimulation(unittest.TestCase):
             self.assertAlmostEqual(expected, actual)
 
     def test_initialise_conditions_custom_config(self):
-        """ Test JSBSimInstance initialisation with custom initial conditions. """
+        """Test JSBSimInstance initialisation with custom initial conditions."""
 
         plane = aircraft.f15
         init_conditions = {
@@ -144,10 +157,12 @@ class TestSimulation(unittest.TestCase):
 
             init_actual = self.sim[init_prop]
             sim_actual = self.sim[sim_prop]
-            self.assertAlmostEqual(expected, init_actual,
-                                   msg=f'wrong value for property {init_prop}')
-            self.assertAlmostEqual(expected, sim_actual,
-                                   msg=f'wrong value for property {sim_prop}')
+            self.assertAlmostEqual(
+                expected, init_actual, msg=f"wrong value for property {init_prop}"
+            )
+            self.assertAlmostEqual(
+                expected, sim_actual, msg=f"wrong value for property {sim_prop}"
+            )
 
         self.assertAlmostEqual(1.0 / sim_frequency, self.sim[prp.sim_dt])
 
@@ -165,12 +180,13 @@ class TestSimulation(unittest.TestCase):
 
         good_exit_code = 0
         expected = [good_exit_code] * processes
-        self.assertListEqual(results, expected,
-                             msg="multiprocess execution of JSBSim failed")
+        self.assertListEqual(
+            results, expected, msg="multiprocess execution of JSBSim failed"
+        )
 
 
 def basic_task():
-    """ A simple task involving initing a JSBSimInstance to test multiprocessing. """
+    """A simple task involving initing a JSBSimInstance to test multiprocessing."""
     model = aircraft.cessna172P
     time.sleep(0.05)
     fdm = Simulation(aircraft=model)
@@ -180,5 +196,5 @@ def basic_task():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
