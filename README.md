@@ -60,20 +60,20 @@ Follow the instructions on the [JSBSim](https://github.com/JSBSim-Team/jsbsim) r
 
 Confirm that JSBSim is installed from the terminal:
 
-```
+```bash
 $ JSBSim --version
 JSBSim Version: 1.2.3 [GitHub build 1561/commit 570e8115a102df8f877b11e0e59b964ea483e3c0] Jun  7 2025 19:20:54
 ```
 
 and confirm that its Python library is correctly installed from a Python interpreter or IDE:
 
-```
+```bash
 python -c "import jsbsim"
 ```
 
 Gymnasium-JSBSim is `pip`-installable using this repository:
 
-```
+```bash
 pip install git+https://github.com/JGalego/gymnasium-jsbsim
 ```
 
@@ -94,7 +94,7 @@ Environment ID strings are constructed as follows `JSBSim-{task}-{aircraft}-SHAP
 
 For example, to fly a Cessna on the Turn Heading Control task,
 
-```
+```python
 env = gym.make('JSBSim-TurnHeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 ```
 
@@ -110,13 +110,13 @@ A basic plot of agent actions and current state information can be using `human`
 
 Confirm it is runnable from terminal with:
 
-```
+```bash
 fgfs --version
 ```
 
 Visualising with FlightGear requires the Gymnasium to be created with a FlightGear-enabled environment ID by changing 'NoFG' -> 'FG'. For example:
 
-```
+```python
 env = gym.make('JSBSim-TurnHeadingControlTask-Cessna172P-Shaping.STANDARD-NoFG-v0')
 ```
 
@@ -126,7 +126,7 @@ The first call to `env.render(mode='flightgear')` will launch FlightGear and beg
 
 Gymnasium-JSBSim's environments have a continuous state and action space. The state is a 17-tuple:
 
-```
+```python
 (name='position/h-sl-ft', description='altitude above mean sea level [ft]', min=-1400, max=85000)
 (name='attitude/pitch-rad', description='pitch [rad]', min=-1.5707963267948966, max=1.5707963267948966)
 (name='attitude/roll-rad', description='roll [rad]', min=-3.141592653589793, max=3.141592653589793)
@@ -147,7 +147,8 @@ Gymnasium-JSBSim's environments have a continuous state and action space. The st
 ```
 
 Actions are 3-tuples of floats in the range [-1,+1] describing commands to move the aircraft's control surfaces (ailerons, elevator, rudder):
-```
+
+```python
 (name='fcs/aileron-cmd-norm', description='aileron commanded position, normalised', min=-1.0, max=1.0)
 (name='fcs/elevator-cmd-norm', description='elevator commanded position, normalised', min=-1.0, max=1.0)
 (name='fcs/rudder-cmd-norm', description='rudder commanded position, normalised', min=-1.0, max=1.0)
