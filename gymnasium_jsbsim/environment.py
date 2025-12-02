@@ -5,7 +5,7 @@ This module provides Env-compliant interfaces to JSBSim for reinforcement
 learning applications, with optional FlightGear visualization support.
 """
 
-from typing import Dict, Tuple, Type, Union
+from typing import Dict, Optional, Tuple, Type, Union
 
 import gymnasium as gym
 import numpy as np
@@ -19,7 +19,7 @@ from gymnasium_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
 JSBSIM_DT_HZ: int = int(constants.JSBSIM_DT_HZ)  # JSBSim integration frequency
 
 
-class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
+class JsbSimEnv(gym.Env):
     """
     A class wrapping the JSBSim flight dynamics module (FDM) for simulating
     aircraft as an RL environment conforming to the Gymnasium Env interface.
@@ -58,18 +58,18 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
                 "or equal to JSBSim integration frequency of "
                 f"{constants.JSBSIM_DT_HZ} Hz."
             )
-        self.sim: Simulation = None
+        self.sim: Optional[Simulation] = None
         self.sim_steps_per_agent_step: int = int(
             constants.JSBSIM_DT_HZ / agent_interaction_freq
         )
         self.aircraft = aircraft
         self.task = task_type(shaping, agent_interaction_freq, aircraft)
         # Set Space objects
-        self.observation_space: gym.spaces.Box = self.task.get_state_space()
-        self.action_space: gym.spaces.Box = self.task.get_action_space()
+        self.observation_space: gym.spaces.Box = self.task.get_state_space()  # type: ignore[assignment]
+        self.action_space: gym.spaces.Box = self.task.get_action_space()  # type: ignore[assignment]
         # Set visualisation objects
-        self.figure_visualiser: FigureVisualiser = None
-        self.flightgear_visualiser: FlightGearVisualiser = None
+        self.figure_visualiser: Optional[FigureVisualiser] = None
+        self.flightgear_visualiser: Optional[FlightGearVisualiser] = None
         self.step_delay = None
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict]:
@@ -89,15 +89,17 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         """
         if not action.shape == self.action_space.shape:
             raise ValueError("mismatch between action and action space size")
+        assert self.sim is not None, "Simulation not initialized. Call reset() first."
 
         state, reward, terminated, truncated, info = self.task.task_step(
-            self.sim, action, self.sim_steps_per_agent_step
+            self.sim, action.tolist(), self.sim_steps_per_agent_step  # type: ignore[arg-type]
         )
+        obs = np.array(state, dtype=np.float64)
         obs = np.array(state, dtype=np.float64)
         obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
         return obs, reward, terminated, truncated, info
 
-    # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
+    # seed parameter required by Gymnasium API
     def reset(
         self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None
     ):
@@ -155,15 +157,15 @@ class JsbSimEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
         if mode == "human":
             if not self.figure_visualiser:
                 self.figure_visualiser = FigureVisualiser(
-                    self.sim, self.task.get_props_to_output()
+                    self.sim, self.task.get_props_to_output()  # type: ignore[arg-type]
                 )
-            self.figure_visualiser.plot(self.sim)
+            self.figure_visualiser.plot(self.sim)  # type: ignore[arg-type]
         elif mode == "flightgear":
             if not self.flightgear_visualiser:
                 self.flightgear_visualiser = FlightGearVisualiser(
-                    self.sim, self.task.get_props_to_output(), flightgear_blocking
+                    self.sim, self.task.get_props_to_output(), flightgear_blocking  # type: ignore[arg-type]
                 )
-            self.flightgear_visualiser.plot(self.sim)
+            self.flightgear_visualiser.plot(self.sim)  # type: ignore[arg-type]
         else:
             super().render()
 
@@ -247,15 +249,16 @@ class NoFGJsbSimEnv(JsbSimEnv):
         """
         if not action.shape == self.action_space.shape:
             raise ValueError("mismatch between action and action space size")
+        assert self.sim is not None, "Simulation not initialized. Call reset() first."
 
         state, reward, terminated, truncated, info = self.task.task_step(
-            self.sim, action, self.sim_steps_per_agent_step
+            self.sim, action.tolist(), self.sim_steps_per_agent_step  # type: ignore[arg-type]
         )
         obs = np.array(state, dtype=np.float64)
         obs = np.clip(obs, self.observation_space.low, self.observation_space.high)
         return obs, reward, terminated, truncated, info
 
-    # pylint: disable=unused-argument  # seed parameter required by Gymnasium API
+    # seed parameter required by Gymnasium API
     def reset(
         self, *, seed: Union[int, None] = None, options: Union[Dict, None] = None
     ):
@@ -300,9 +303,9 @@ class NoFGJsbSimEnv(JsbSimEnv):
         if mode == "human":
             if not self.figure_visualiser:
                 self.figure_visualiser = FigureVisualiser(
-                    self.sim, self.task.get_props_to_output()
+                    self.sim, self.task.get_props_to_output()  # type: ignore[arg-type]
                 )
-            self.figure_visualiser.plot(self.sim)
+            self.figure_visualiser.plot(self.sim)  # type: ignore[arg-type]
         elif mode == "flightgear":
             raise ValueError("flightgear rendering is disabled for this class")
         else:

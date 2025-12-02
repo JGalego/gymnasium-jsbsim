@@ -2,7 +2,7 @@
 
 import subprocess
 import time
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 import matplotlib.pyplot as plt
 
@@ -38,9 +38,9 @@ class FigureVisualiser:
             Must be retrievable from the plotted Simulation.
         """
         self.print_props = print_props
-        self.figure: plt.Figure = None
-        self.axes: AxesTuple = None
-        self.value_texts: Tuple[plt.Text] = None
+        self.figure: Optional[plt.Figure] = None
+        self.axes: Optional[AxesTuple] = None
+        self.value_texts: Optional[Tuple[plt.Text, ...]] = None
 
     def plot(self, sim: Simulation) -> None:
         """
@@ -52,15 +52,16 @@ class FigureVisualiser:
             self.figure, self.axes = self._plot_configure()
 
         # Delete old control surface data points
-        for subplot in self.axes[1:]:
-            # Pop and translate all data points
-            while subplot.lines:
-                data = subplot.lines[0].remove()
-                del data
+        if self.axes:
+            for subplot in self.axes[1:]:  # type: ignore[index]
+                # Pop and translate all data points
+                while subplot.lines:
+                    subplot.lines[0].remove()  # type: ignore[func-returns-value]
 
         self._print_state(sim)
-        self._plot_control_states(sim, self.axes)
-        self._plot_control_commands(sim, self.axes)
+        if self.axes:
+            self._plot_control_states(sim, self.axes)
+            self._plot_control_commands(sim, self.axes)
         plt.pause(
             constants.PLOT_PAUSE_SECONDS
         )  # Voodoo pause needed for figure to update
@@ -69,8 +70,8 @@ class FigureVisualiser:
         """Clean up and close the figure."""
         if self.figure:
             plt.close(self.figure)
-            self.figure = None
-            self.axes = None
+            self.figure = None  # type: ignore[assignment]
+            self.axes = None  # type: ignore[assignment]
 
     def _plot_configure(self):
         """
@@ -177,7 +178,7 @@ class FigureVisualiser:
                 y,
                 label,
                 transform=ax.transAxes,
-                **constants.LABEL_TEXT_KWARGS,
+                **constants.LABEL_TEXT_KWARGS,  # type: ignore[arg-type]
             )
 
         # Print and store empty Text objects which we will rewrite each plot call
@@ -189,15 +190,16 @@ class FigureVisualiser:
                 y,
                 dummy_msg,
                 transform=ax.transAxes,
-                **constants.VALUE_TEXT_KWARGS,
+                **constants.VALUE_TEXT_KWARGS,  # type: ignore[arg-type]
             )
             value_texts.append(text)
-        self.value_texts = tuple(value_texts)
+        self.value_texts = tuple(value_texts)  # type: ignore[assignment]
 
     def _print_state(self, sim: Simulation):
         # Update each Text object with latest value
-        for prop, text in zip(self.print_props, self.value_texts):
-            text.set_text(f"{sim[prop]:.4g}")
+        if self.value_texts:
+            for prop, text in zip(self.print_props, self.value_texts):
+                text.set_text(f"{sim[prop]:.4g}")
 
     def _plot_control_states(self, sim: Simulation, all_axes: AxesTuple):
         control_surfaces = [prp.aileron_left, prp.elevator, prp.throttle, prp.rudder]
@@ -282,7 +284,7 @@ class FlightGearVisualiser:
         )
         # Subprocess is not used with context manager because it needs to persist
         # And is managed manually via close() method
-        # pylint: disable=consider-using-with
+
         flightgear_process = subprocess.Popen(
             cmd_line_args,
             stdout=subprocess.PIPE,

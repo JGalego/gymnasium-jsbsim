@@ -6,13 +6,18 @@ including support for reward shaping and potential-based rewards.
 """
 
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import TYPE_CHECKING, Tuple, TypeAlias, Union
 
 import gymnasium_jsbsim.properties as prp
 from gymnasium_jsbsim import constants
 from gymnasium_jsbsim.utils import reduce_reflex_angle_deg
 
-State = "tasks.FlightTask.State"  # pylint: disable=invalid-name
+if TYPE_CHECKING:
+    from typing import Any
+
+    State: TypeAlias = Tuple[Any, ...]
+else:
+    State = "tasks.FlightTask.State"
 
 
 class Reward:
@@ -89,12 +94,11 @@ class NormalisedComponent(RewardComponent, ABC):
     All potentials of subclasses should be normalised in [0.0, 1.0]
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         name: str,
         prop: prp.BoundedProperty,
-        state_variables: Tuple[prp.BoundedProperty],
+        state_variables: Tuple[prp.BoundedProperty, ...],
         target: Union[int, float, prp.Property, prp.BoundedProperty],
         potential_difference_based: bool,
     ):
@@ -113,12 +117,12 @@ class NormalisedComponent(RewardComponent, ABC):
         self.name = name
         self.state_index_of_value = state_variables.index(prop)
         self.potential_difference_based = potential_difference_based
-        self._set_target(target, state_variables)
+        self._set_target_or_target_index(target, state_variables)
 
-    def _set_target(
+    def _set_target_or_target_index(
         self,
         target: Union[int, float, prp.Property, prp.BoundedProperty],
-        state_variables: Tuple[prp.BoundedProperty],
+        state_variables: Tuple[prp.BoundedProperty, ...],
     ) -> None:
         """
         Sets the target value or an index for retrieving it from States
@@ -133,7 +137,7 @@ class NormalisedComponent(RewardComponent, ABC):
             self.constant_target = False
             self.target_index = state_variables.index(target)
 
-    # pylint: disable=arguments-renamed  # prev_state is clearer than last_state
+    # prev_state is clearer than last_state
     def calculate(self, state: State, prev_state: State, is_terminal: bool):
         """
         Calculates the value of this RewardComponent.
@@ -210,12 +214,11 @@ class AsymptoticErrorComponent(ErrorComponent):
     to worry about the bounds on the absolute error value.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         name: str,
         prop: prp.BoundedProperty,
-        state_variables: Tuple[prp.BoundedProperty],
+        state_variables: Tuple[prp.BoundedProperty, ...],
         target: Union[int, float, prp.Property, prp.BoundedProperty],
         is_potential_based: bool,
         scaling_factor: Union[float, int],
@@ -245,7 +248,7 @@ class AngularAsymptoticErrorComponent(AsymptoticErrorComponent):
     (-180, 180] before processing.
     """
 
-    # pylint: disable=arguments-renamed  # angular_error is clearer than absolute_error
+    # angular_error is clearer than absolute_error
     def _normalise_error(self, angular_error: float):
         """
         Given an angle off of a target direction in degrees, calculates a
@@ -268,7 +271,6 @@ class LinearErrorComponent(ErrorComponent):
     interest and its target. The error must be in the interval [0, scaling_factor].
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         name: str,
@@ -329,7 +331,7 @@ class RewardStub(Reward):
 
     def __init__(self, agent_reward_value: float, assessment_reward_value: float):
         # Don't call parent __init__ since stub doesn't use base_reward_elements
-        # pylint: disable=super-init-not-called
+
         assert isinstance(agent_reward_value, float)
         assert isinstance(assessment_reward_value, float)
         self.agent_reward_value = agent_reward_value

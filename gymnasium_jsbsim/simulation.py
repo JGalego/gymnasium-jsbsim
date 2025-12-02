@@ -4,7 +4,7 @@ Wrapper for JSBSim flight dynamics simulator.
 
 import os
 import time
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import jsbsim
 
@@ -18,14 +18,13 @@ class Simulation:
     Wrapper class for JSBSim flight dynamics simulator.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         sim_frequency_hz: float = 60.0,
         aircraft: Aircraft = cessna172P,
-        init_conditions: Dict[prp.Property, float] = None,
+        init_conditions: Optional[Dict[prp.Property, float]] = None,
         allow_flightgear_output: bool = True,
-        root_dir: Union[str, None] = None,
+        root_dir: Optional[str] = None,
     ):
         """
         Creates and initialises a JSBSim simulation instance.
@@ -41,7 +40,8 @@ class Simulation:
         """
         if init_conditions is None:
             init_conditions = {}
-        self.jsbsim = jsbsim.FGFDMExec(root_dir)
+        # JSBSim FGFDMExec constructor - root_dir can be None (uses default)
+        self.jsbsim = jsbsim.FGFDMExec(root_dir)  # type: ignore[call-arg]
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
             flightgear_output_config = os.path.join(
@@ -108,7 +108,7 @@ class Simulation:
         """
         return self.aircraft
 
-    def get_loaded_model_name(self) -> str:
+    def get_loaded_model_name(self) -> Optional[str]:
         """
         Gets the name of the aircraft model currently loaded in JSBSim.
 
@@ -135,7 +135,7 @@ class Simulation:
         self,
         dt: float,
         model_name: str,
-        init_conditions: Dict["prp.Property", float] = None,
+        init_conditions: Optional[Dict["prp.Property", float]] = None,
     ) -> None:
         """
         Initialises JSBSim with the specified aircraft and initial conditions.
@@ -171,7 +171,7 @@ class Simulation:
             raise RuntimeError("JSBSim failed to init simulation conditions.")
 
     def set_custom_initial_conditions(
-        self, init_conditions: Dict["prp.Property", float] = None
+        self, init_conditions: Optional[Dict["prp.Property", float]] = None
     ) -> None:
         """
         Set custom initial conditions in the simulation.
@@ -183,7 +183,9 @@ class Simulation:
             for prop, value in init_conditions.items():
                 self[prop] = value
 
-    def reinitialise(self, init_conditions: Dict["prp.Property", float] = None) -> None:
+    def reinitialise(
+        self, init_conditions: Optional[Dict["prp.Property", float]] = None
+    ) -> None:
         """
         Reinitialises the JSBSim simulation to the initial conditions.
 
@@ -229,7 +231,7 @@ class Simulation:
         Closes the simulation and any plots.
         """
         if self.jsbsim:
-            self.jsbsim = None
+            self.jsbsim = None  # type: ignore[assignment]
 
     def set_simulation_time_factor(self, time_factor):
         """

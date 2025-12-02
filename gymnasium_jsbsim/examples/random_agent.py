@@ -4,7 +4,7 @@ A simple example of using the Gymnasium-JSBSim environment with a random agent.
 
 import gymnasium as gym
 
-import gymnasium_jsbsim  # pylint: disable=unused-import  # noqa: F401
+import gymnasium_jsbsim  # noqa: F401
 
 # Define the maximum number of steps to run
 MAX_STEPS = 100

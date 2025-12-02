@@ -8,7 +8,7 @@ import shutil
 from typing import Iterable
 
 
-class AttributeFormatter:  # pylint: disable=too-few-public-methods
+class AttributeFormatter:
     """
     Replaces characters that would be illegal in an attribute name.
 

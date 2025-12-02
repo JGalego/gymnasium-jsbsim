@@ -7,13 +7,20 @@ including support for sequential and dependent reward components.
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple, TypeAlias
 
 from gymnasium_jsbsim import utils
 from gymnasium_jsbsim.rewards import Reward, RewardComponent, State
 
+if TYPE_CHECKING:
+    from typing import Any
 
-class Assessor(ABC):  # pylint: disable=too-few-public-methods
+    StateType: TypeAlias = Tuple[Any, ...]
+else:
+    StateType = State
+
+
+class Assessor(ABC):
     """Interface for Assessors which calculate Rewards from States."""
 
     @abstractmethod
@@ -21,7 +28,7 @@ class Assessor(ABC):  # pylint: disable=too-few-public-methods
         """Calculates reward from environment's state, previous state and terminal condition"""
 
 
-class AssessorImpl(Assessor):  # pylint: disable=too-few-public-methods
+class AssessorImpl(Assessor):
     """
     Determines the Reward from a state transitions.
 
@@ -85,7 +92,7 @@ class AssessorImpl(Assessor):  # pylint: disable=too-few-public-methods
         )
 
 
-class SequentialAssessor(AssessorImpl, ABC):  # pylint: disable=too-few-public-methods
+class SequentialAssessor(AssessorImpl, ABC):
     """
     Abstract class that allows base and potential components to be assigned
     dependencies of other components, such that they are affected by the
@@ -95,16 +102,15 @@ class SequentialAssessor(AssessorImpl, ABC):  # pylint: disable=too-few-public-m
     the 'normal' component potentials to account for dependents
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         base_components: Iterable["RewardComponent"],
         potential_components: Iterable["RewardComponent"] = (),
-        base_dependency_map: Dict[
-            "RewardComponent", Tuple["RewardComponent", ...]
+        base_dependency_map: Optional[
+            Dict["RewardComponent", Tuple["RewardComponent", ...]]
         ] = None,
-        potential_dependency_map: Dict[
-            "RewardComponent", Tuple["RewardComponent", ...]
+        potential_dependency_map: Optional[
+            Dict["RewardComponent", Tuple["RewardComponent", ...]]
         ] = None,
         positive_rewards: bool = False,
     ):
@@ -145,7 +151,6 @@ class SequentialAssessor(AssessorImpl, ABC):  # pylint: disable=too-few-public-m
             return tuple(seq_values)
         return tuple(value - 1 for value in seq_values)
 
-    # pylint: disable=arguments-renamed
     def _potential_based_rewards(
         self, state: State, prev_state: State, is_terminal: bool
     ) -> Tuple[float, ...]:
@@ -193,9 +198,7 @@ class SequentialAssessor(AssessorImpl, ABC):  # pylint: disable=too-few-public-m
         """
 
 
-class ContinuousSequentialAssessor(
-    SequentialAssessor
-):  # pylint: disable=too-few-public-methods
+class ContinuousSequentialAssessor(SequentialAssessor):
     """
     A sequential assessor in which shaping components with dependents have their potential
     reduced according to their dependent's potentials through multiplication.

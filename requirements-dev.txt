@@ -22,5 +22,4 @@ sphinx>=7.2.0
 sphinx-rtd-theme>=2.0.0
 
 # Code quality tools
-pylint>=3.0.0
 coverage>=7.4.0

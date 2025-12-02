@@ -51,7 +51,7 @@ for env_id, (
     )
 
 # Make an Enum storing every Gym-JSBSim environment ID for convenience and value safety
-Envs = enum.Enum(
+Envs = enum.Enum(  # type: ignore[misc]
     "Envs",
     [
         (utils.AttributeFormatter.translate(env_id), env_id)

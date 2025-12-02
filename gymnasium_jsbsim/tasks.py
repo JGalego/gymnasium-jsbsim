@@ -12,7 +12,7 @@ import types
 import warnings
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from typing import Dict, NamedTuple, Optional, Sequence, Tuple, Type
+from typing import Dict, NamedTuple, Optional, Sequence, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -134,10 +134,10 @@ class FlightTask(Task, ABC):
     state_variables: Tuple[BoundedProperty, ...]
     action_variables: Tuple[BoundedProperty, ...]
     assessor: assessors.Assessor
-    State: Type[NamedTuple]
+    State: type  # type: ignore[misc,valid-type]
 
     def __init__(self, assessor: assessors.Assessor, debug: bool = False) -> None:
-        self.last_state = None
+        self.last_state: Optional[NamedTuple] = None
         self.assessor = assessor
         self._make_state_class()
         self.debug = debug
@@ -146,13 +146,11 @@ class FlightTask(Task, ABC):
         """Creates a namedtuple for readable State data"""
         # Get list of state property names, containing legal chars only
         legal_attribute_names = [prop.get_legal_name() for prop in self.state_variables]
-        self.State = namedtuple(  # pylint: disable=invalid-name
-            "State", legal_attribute_names
-        )
+        self.State = namedtuple("State", legal_attribute_names)  # type: ignore[misc]
 
     def task_step(
         self, sim: Simulation, action: Sequence[float], sim_steps: int
-    ) -> Tuple[NamedTuple, float, bool, bool, Dict]:
+    ) -> Tuple[np.ndarray, float, bool, bool, Dict]:  # type: ignore[override]
         # Input actions
         for prop, command in zip(self.action_variables, action):
             sim[prop] = command
@@ -162,11 +160,11 @@ class FlightTask(Task, ABC):
             sim.run()
 
         self._update_custom_properties(sim)
-        state = self.State(*(sim[prop] for prop in self.state_variables))
+        state = self.State(*(sim[prop] for prop in self.state_variables))  # type: ignore[call-overload]
         terminated = self._is_terminal(sim)
-        reward = self.assessor.assess(state, self.last_state, terminated)
+        reward = self.assessor.assess(state, self.last_state, terminated)  # type: ignore[arg-type]
         if terminated:
-            reward = self._reward_terminal_override(reward, sim)
+            reward = self._reward_terminal_override(reward, sim)  # type: ignore[assignment]
         if self.debug:
             self._validate_state(state, terminated, action, reward)
         self._store_reward(reward, sim)
@@ -207,7 +205,7 @@ class FlightTask(Task, ABC):
     @abstractmethod
     def _reward_terminal_override(
         self, reward: rewards.Reward, sim: Simulation
-    ) -> bool:
+    ) -> rewards.Reward:
         """
         Determines whether a custom reward is needed, e.g. because
         a terminal condition is met.
@@ -216,9 +214,9 @@ class FlightTask(Task, ABC):
     def observe_first_state(self, sim: Simulation) -> np.ndarray:
         self._new_episode_init(sim)
         self._update_custom_properties(sim)
-        state = self.State(*(sim[prop] for prop in self.state_variables))
+        state = self.State(*(sim[prop] for prop in self.state_variables))  # type: ignore[call-overload]
         self.last_state = state
-        return state
+        return state  # type: ignore[return-value]
 
     def _new_episode_init(self, sim: Simulation) -> None:
         """
@@ -278,7 +276,6 @@ class HeadingControlTask(FlightTask):
     )
     action_variables = (prp.aileron_cmd, prp.elevator_cmd, prp.rudder_cmd)
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         shaping_type: Shaping,
@@ -385,10 +382,10 @@ class HeadingControlTask(FlightTask):
             return assessors.ContinuousSequentialAssessor(
                 base_components,
                 potential_based_components,
-                potential_dependency_map=dependency_map,
+                potential_dependency_map=dependency_map,  # type: ignore[arg-type]
                 positive_rewards=self.positive_rewards,
             )
-        return None  # Should never reach here, but satisfies pylint
+        return None
 
     def get_initial_conditions(self) -> Dict[Property, float]:
         extra_conditions = {
@@ -490,7 +487,7 @@ class TurnHeadingControlTask(HeadingControlTask):
     and fly level to a random target heading.
     """
 
-    def get_initial_conditions(self) -> [Dict[Property, float]]:
+    def get_initial_conditions(self) -> Dict[Property, float]:
         initial_conditions = super().get_initial_conditions()
         random_heading = random.uniform(prp.heading_deg.min, prp.heading_deg.max)
         initial_conditions[prp.initial_heading_deg] = random_heading
