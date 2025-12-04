@@ -46,10 +46,10 @@ class AssessorImpl(Assessor):
         Initialises the Assessor with given RewardComponents.
         :param base_components: RewardComponents from which Reward is to be calculated
         :param potential_based_components: RewardComponents from which a potential-based
-            reward component is to be calculated from
-        :param positive_rewards: True if rewards should be in [0.0, 1.0] (0.0 corresp. to
-            worst behaviour), else rewards will be in [-1.0, 0.0] with 0.0 corresp. to
-            perfect behaviour. Has no effect one potential difference based components.
+        reward component is to be calculated from
+        :param positive_rewards: `True` if rewards should be in `[0.0, 1.0]` (0.0 corresponds to
+        worst behaviour), else rewards will be in `[-1.0, 0.0]` with 0.0 corresponds to
+        perfect behaviour. Has no effect one potential difference based components.
         """
         self.base_components = tuple(base_components)
         self.potential_components = tuple(potential_based_components)
@@ -148,15 +148,15 @@ class SequentialAssessor(AssessorImpl, ABC):
         Initialises the SequentialAssessor with given RewardComponents and
         their dependencies.
         :param base_components: RewardComponents from which the non-shaping
-            part of the Reward is to be calculated
+        part of the Reward is to be calculated
         :param potential_components: ErrorComponents from which the shaping
-            reward is to be calculated, or an empty tuple for no shaping
+        reward is to be calculated, or an empty tuple for no shaping
         :param base_dependency_map: maps base components with sequential
-            dependencies to their dependent components, defaults to
-            no dependencies
+        dependencies to their dependent components, defaults to
+        no dependencies
         :param potential_dependency_map: maps potential components with sequential
-            dependencies to their dependent components, defaults to
-            no dependencies
+        dependencies to their dependent components, defaults to
+        no dependencies
         """
         super().__init__(base_components, potential_components, positive_rewards)
         self.base_dependency_map = (

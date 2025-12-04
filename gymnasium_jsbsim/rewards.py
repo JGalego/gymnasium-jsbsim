@@ -181,7 +181,7 @@ class ErrorComponent(NormalisedComponent, ABC):
     """
     Calculates rewards based on a normalised error complement from a target value.
 
-    Normalising an error takes some absolute difference |value - target| and
+    Normalising an error takes some absolute difference abs(value - target) and
     transforms it to the interval [0,1], where 1.0 is no error and 0.0 is inf error.
     """
 

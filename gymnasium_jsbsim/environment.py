@@ -138,18 +138,17 @@ class JsbSimEnv(gym.Env):
 
         By convention, if mode is:
         - `human`: render to the current display or terminal and
-          return nothing. Usually for human consumption.
+        return nothing. Usually for human consumption.
         - `rgb_array`: return a `numpy.ndarray` with shape `(x, y, 3)`,
-          representing RGB values for an x-by-y pixel image, suitable
-          for turning into a video.
+        representing RGB values for an x-by-y pixel image, suitable
+        for turning into a video.
         - `ansi`: return a string (str) or `StringIO.StringIO` containing a
-          terminal-style text representation. The text can include newlines
-          and ANSI escape sequences (e.g. for colors).
+        terminal-style text representation. The text can include newlines
+        and ANSI escape sequences (e.g. for colors).
 
-        Note:
-            Make sure that your class's metadata 'render.modes' key includes
-              the list of supported modes. It's recommended to call `super()`
-              in implementations to use the functionality of this method.
+        Note: Make sure that your class's metadata 'render.modes' key includes
+        the list of supported modes. It's recommended to call `super()` in
+        implementations to use the functionality of this method.
 
         :param mode: str, the mode to render with
         :param flightgear_blocking: waits for FlightGear to load before

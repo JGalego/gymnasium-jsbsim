@@ -29,14 +29,14 @@ class Simulation:
         """
         Creates and initializes a JSBSim simulation instance.
 
-        Args:
-            sim_frequency_hz: the JSBSim integration frequency in Hz.
-            aircraft: Aircraft instance to be loaded.
-            init_conditions: dict mapping properties to their initial values.
-                Defaults to `None, causing a default set of initial props to be used.
-            allow_flightgear_output: bool, loads a config file instructing
-                JSBSim to connect to an output socket if True.
-            root_dir: JSBSim root directory path
+        :param sim_frequency_hz: the JSBSim integration frequency in Hz.
+        :param aircraft: Aircraft instance to be loaded.
+        :param init_conditions: dict mapping properties to their initial values.
+            Defaults to `None`, causing a default set of initial props to be used.
+        :param allow_flightgear_output: bool, loads a config file instructing
+            JSBSim to connect to an output socket if `True`.
+        :param root_dir: JSBSim root directory path
+        :raises RuntimeError: if JSBSim fails to initialize or load the model
         """
         if init_conditions is None:
             init_conditions = {}
