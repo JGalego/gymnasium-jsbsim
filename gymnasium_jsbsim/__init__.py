@@ -9,6 +9,7 @@ their env ID string as value. This allows convenient autocompletion and value sa
 __version__ = "0.1.1"
 
 import enum
+import itertools
 from typing import Dict, Tuple
 
 import gymnasium.envs.registration
@@ -22,19 +23,23 @@ def get_env_id_kwargs_map() -> Dict[str, Tuple]:
     """
     Returns all environment IDs mapped to tuple of (task, aircraft, shaping, flightgear).
     """
+    task_types = (HeadingControlTask, TurnHeadingControlTask)
+    planes = (cessna172P, a320, f15)
+    shapings = (Shaping.STANDARD, Shaping.EXTRA, Shaping.EXTRA_SEQUENTIAL)
+    flightgear_settings = (True, False)
+
     env_map = {}
-    for task_type in (HeadingControlTask, TurnHeadingControlTask):
-        for _plane in (cessna172P, a320, f15):
-            for _shaping in (Shaping.STANDARD, Shaping.EXTRA, Shaping.EXTRA_SEQUENTIAL):
-                for _enable_flightgear in (True, False):
-                    _env_id = utils.get_env_id(
-                        task_type, _plane, _shaping, _enable_flightgear
-                    )
-                    assert _env_id not in env_map
-                    env_map[_env_id] = (task_type, _plane, _shaping, _enable_flightgear)
+    for task_type, plane, shaping, enable_flightgear in itertools.product(
+        task_types, planes, shapings, flightgear_settings
+    ):
+        env_id = utils.get_env_id(task_type, plane, shaping, enable_flightgear)
+        assert env_id not in env_map
+        env_map[env_id] = (task_type, plane, shaping, enable_flightgear)
+
     return env_map
 
 
+# Register all environments with Gymnasium
 for env_id, (
     task,
     plane,
@@ -50,7 +55,7 @@ for env_id, (
         id=env_id, entry_point=ENTRY_POINT, kwargs=kwargs
     )
 
-# Make an Enum storing every Gym-JSBSim environment ID for convenience and value safety
+# Create an enum of all registered environments for convenient access
 Envs = enum.Enum(  # type: ignore[misc]
     "Envs",
     [

@@ -27,7 +27,7 @@ from gymnasium_jsbsim.simulation import Simulation
 
 class Task(ABC):
     """
-    Interface for Tasks, modules implementing specific environments in JSBSim.
+    Interface class for JSBSim tasks.
 
     A task defines its own state space, action space, termination conditions
     and agent_reward function.
@@ -40,15 +40,15 @@ class Task(ABC):
         """
         Calculates new state, reward and termination.
 
-        :param sim: a Simulation, the simulation from which to extract state
+        :param sim: a `Simulation`, the simulation from which to extract state
         :param action: sequence of floats, the agent's last action
         :param sim_steps: number of JSBSim integration steps to perform following action
             prior to making observation
         :return: tuple of (observation, reward, terminated, truncated, info) where,
             observation: array, agent's observation of the environment state
             reward: float, the reward for that step
-            terminated: bool, True if the episode reached a terminal state
-            truncated: bool, True if the episode was truncated (e.g., time limit)
+            terminated: bool, `True` if the episode reached a terminal state
+            truncated: bool, `True` if the episode was truncated e.g. time limit
             info: dict, optional, containing diagnostic info for debugging etc.
         """
 
@@ -57,8 +57,8 @@ class Task(ABC):
         """
         Initialise any state/controls and get first state observation from reset sim.
 
-        :param sim: Simulation, the environment simulation
-        :return: np array, the first state observation of the episode
+        :param sim: `Simulation`, the environment simulation
+        :return: `np.ndarray`, the first state observation of the episode
         """
 
     @abstractmethod
@@ -69,21 +69,21 @@ class Task(ABC):
         Episode initial conditions (ICs) are defined by specifying values for
         JSBSim properties, represented by their name (string) in JSBSim.
 
-        JSBSim uses a distinct set of properties for ICs, beginning with 'ic/'
+        JSBSim uses a distinct set of properties for ICs, beginning with `ic/`
         which differ from property names during the simulation, e.g. "ic/u-fps"
         instead of "velocities/u-fps". See https://jsbsim-team.github.io/jsbsim/
 
         :return: dict mapping string for each initial condition property to
-            initial value, a float, or None to use Env defaults
+            initial value, a float, or `None` to use Env defaults
         """
 
     @abstractmethod
     def get_state_space(self) -> gym.Space:
-        """Get the task's state Space object"""
+        """Get the task state Space object"""
 
     @abstractmethod
     def get_action_space(self) -> gym.Space:
-        """Get the task's action Space object"""
+        """Get the task action Space object"""
 
 
 class FlightTask(Task, ABC):
@@ -170,12 +170,22 @@ class FlightTask(Task, ABC):
         self._store_reward(reward, sim)
         self.last_state = state
         info = {"reward": reward}
+
         # For now, we don't distinguish between terminated and truncated
         truncated = False
 
         return state, reward.agent_reward(), terminated, truncated, info
 
     def _validate_state(self, state, done, action, reward):
+        """
+        Validates the state to check for any invalid values such as NaN.
+        Warns if any invalid values are found.
+
+        :param state: The current state to validate.
+        :param done: Whether the episode is done.
+        :param action: The action taken.
+        :param reward: The reward received.
+        """
         if any(math.isnan(el) for el in state):  # float('nan') in state doesn't work!
             msg = (
                 f"Invalid state encountered!\n"
@@ -188,15 +198,23 @@ class FlightTask(Task, ABC):
             warnings.warn(msg, RuntimeWarning)
 
     def _store_reward(self, reward: rewards.Reward, sim: Simulation):
+        """
+        Stores the last reward values in the simulation properties.
+
+        :param reward: the Reward object containing agent and assessment rewards
+        :param sim: the current simulation
+        """
         sim[self.last_agent_reward] = reward.agent_reward()
         sim[self.last_assessment_reward] = reward.assessment_reward()
 
     def _update_custom_properties(self, sim: Simulation) -> None:
         """Calculates any custom properties which change every timestep."""
+        pass
 
     @abstractmethod
     def _is_terminal(self, sim: Simulation) -> bool:
-        """Determines whether the current episode should terminate.
+        """
+        Determines whether the current episode should terminate.
 
         :param sim: the current simulation
         :return: True if the episode should terminate else False
@@ -209,6 +227,10 @@ class FlightTask(Task, ABC):
         """
         Determines whether a custom reward is needed, e.g. because
         a terminal condition is met.
+
+        :param reward: the current reward
+        :param sim: the current simulation
+        :return: the possibly modified reward
         """
 
     def observe_first_state(self, sim: Simulation) -> np.ndarray:
@@ -225,6 +247,8 @@ class FlightTask(Task, ABC):
         in the task's initial conditions.
 
         By default it simply starts the aircraft engines.
+
+        :param sim: the current simulation
         """
         sim.start_engines()
         sim.raise_landing_gear()
@@ -235,11 +259,21 @@ class FlightTask(Task, ABC):
         """Get initial conditions for the task."""
 
     def get_state_space(self) -> gym.Space:
+        """
+        Get the task state Space object.
+
+        :return: gym.Space representing the task state space
+        """
         state_lows = np.array([state_var.min for state_var in self.state_variables])
         state_highs = np.array([state_var.max for state_var in self.state_variables])
         return gym.spaces.Box(low=state_lows, high=state_highs, dtype=np.float64)
 
     def get_action_space(self) -> gym.Space:
+        """
+        Get the task action Space object.
+
+        :return: gym.Space representing the task action space
+        """
         action_lows = np.array([act_var.min for act_var in self.action_variables])
         action_highs = np.array([act_var.max for act_var in self.action_variables])
         return gym.spaces.Box(low=action_lows, high=action_highs, dtype=np.float64)
@@ -285,7 +319,7 @@ class HeadingControlTask(FlightTask):
         positive_rewards: bool = True,
     ):
         """
-        Constructor.
+        Initializes a HeadingControlTask.
 
         :param step_frequency_hz: the number of agent interaction steps per second
         :param aircraft: the aircraft used in the simulation
@@ -310,12 +344,22 @@ class HeadingControlTask(FlightTask):
         super().__init__(assessor)
 
     def make_assessor(self, shaping: Shaping) -> assessors.AssessorImpl:
-        """Create assessor with base and shaping components based on shaping type."""
+        """
+        Create assessor with base and shaping components based on shaping type.
+
+        :param shaping: the shaping configuration
+        :return: the configured assessor
+        """
         base_components = self._make_base_reward_components()
         shaping_components = ()
         return self._select_assessor(base_components, shaping_components, shaping)
 
     def _make_base_reward_components(self) -> Tuple[rewards.RewardComponent, ...]:
+        """
+        Create base reward components for the task.
+
+        :return: tuple of base reward components
+        """
         base_components = (
             rewards.AsymptoticErrorComponent(
                 name="altitude_error",
@@ -343,7 +387,14 @@ class HeadingControlTask(FlightTask):
         shaping_components: Tuple[rewards.RewardComponent, ...],
         shaping: Shaping,
     ) -> assessors.AssessorImpl:
-        """Select and configure the appropriate assessor based on shaping type."""
+        """
+        Select and configure the appropriate assessor based on shaping type.
+
+        :param base_components: tuple of base reward components
+        :param shaping_components: tuple of shaping reward components
+        :param shaping: the shaping configuration
+        :return: the configured assessor
+        """
         if shaping is Shaping.STANDARD:
             return assessors.AssessorImpl(
                 base_components,
@@ -388,6 +439,10 @@ class HeadingControlTask(FlightTask):
         return None
 
     def get_initial_conditions(self) -> Dict[Property, float]:
+        """
+        Get initial conditions for the task.
+        :return: dict mapping initial condition Propertys to values
+        """
         extra_conditions = {
             prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
             prp.initial_v_fps: 0,
@@ -401,11 +456,19 @@ class HeadingControlTask(FlightTask):
         return {**self.base_initial_conditions, **extra_conditions}
 
     def _update_custom_properties(self, sim: Simulation) -> None:
+        """
+        Calculates any custom properties which change every timestep.
+        :param sim: the current simulation
+        """
         self._update_track_error(sim)
         self._update_altitude_error(sim)
         self._decrement_steps_left(sim)
 
     def _update_track_error(self, sim: Simulation):
+        """
+        Update the track error property in the simulation.
+        :param sim: the current simulation
+        """
         v_north_fps, v_east_fps = sim[prp.v_north_fps], sim[prp.v_east_fps]
         track_deg = prp.Vector2(v_east_fps, v_north_fps).heading_deg()
         target_track_deg = sim[self.target_track_deg]
@@ -413,32 +476,55 @@ class HeadingControlTask(FlightTask):
         sim[self.track_error_deg] = error_deg
 
     def _update_altitude_error(self, sim: Simulation):
+        """
+        Update the altitude error property in the simulation.
+        :param sim: the current simulation
+        """
         altitude_ft = sim[prp.altitude_sl_ft]
         target_altitude_ft = self._get_target_altitude()
         error_ft = altitude_ft - target_altitude_ft
         sim[self.altitude_error_ft] = error_ft
 
     def _decrement_steps_left(self, sim: Simulation):
+        """
+        Decrement the steps left property in the simulation.
+        :param sim: the current simulation
+        """
         sim[self.steps_left] -= 1
 
     def _is_terminal(self, sim: Simulation) -> bool:
+        """
+        Determines whether the current episode should terminate.
+        :param sim: the current simulation
+        :return: `True` if the episode should terminate else `False`
+        """
         # Terminate when time >= max, but use math.isclose() for float equality test
         terminal_step = sim[self.steps_left] <= 0
         state_quality = sim[self.last_assessment_reward]
+
         # Note: For sequential shaping, this uses the assessment reward (without shaping)
         # to determine state quality, which is correct as we want to check the actual
         # state performance, not the potential-based reward difference
         state_out_of_bounds = state_quality < constants.MIN_STATE_QUALITY
+
         return terminal_step or state_out_of_bounds or self._altitude_out_of_bounds(sim)
 
     def _altitude_out_of_bounds(self, sim: Simulation) -> bool:
+        """
+        Determines whether the altitude error is out of bounds.
+        :param sim: the current simulation
+        :return: `True` if the altitude error exceeds the maximum allowed deviation
+        """
         altitude_error_ft = sim[self.altitude_error_ft]
         return abs(altitude_error_ft) > constants.MAX_ALTITUDE_DEVIATION_FT
 
     def _get_out_of_bounds_reward(self, sim: Simulation) -> rewards.Reward:
         """
-        if aircraft is out of bounds, we give the largest possible negative reward:
+        If aircraft is out of bounds, we give the largest possible negative reward:
         as if this timestep, and every remaining timestep in the episode was -1.
+
+        :param sim: the current simulation
+        :return: the out-of-bounds reward
         """
         reward_scalar = (1 + sim[self.steps_left]) * -1.0
         return RewardStub(reward_scalar, reward_scalar)
@@ -446,27 +532,53 @@ class HeadingControlTask(FlightTask):
     def _reward_terminal_override(
         self, reward: rewards.Reward, sim: Simulation
     ) -> rewards.Reward:
-        """Override reward on terminal conditions."""
+        """
+        Override reward on terminal conditions.
+        :param reward: the current reward
+        :param sim: the current simulation
+        :return: the possibly modified reward
+        """
         if self._altitude_out_of_bounds(sim) and not self.positive_rewards:
             # If using negative rewards, need to give a big negative reward on terminal
             return self._get_out_of_bounds_reward(sim)
         return reward
 
     def _new_episode_init(self, sim: Simulation) -> None:
+        """
+        This method is called at the start of every episode. It is used to set
+        the value of any controls or environment properties not already defined
+        in the task's initial conditions.
+
+        By default it simply starts the aircraft engines and sets throttle
+        and mixture to constants.THROTTLE_CMD and constants.MIXTURE_CMD respectively.
+
+        :param sim: the current simulation
+        """
         super()._new_episode_init(sim)
         sim.set_throttle_mixture_controls(constants.THROTTLE_CMD, constants.MIXTURE_CMD)
         sim[self.steps_left] = self.steps_left.max
         sim[self.target_track_deg] = self._get_target_track()
 
     def _get_target_track(self) -> float:
+        """
+        Get the target track for the episode.
+        :return: the target track in degrees
+        """
         # Use the same, initial heading every episode
         return constants.INITIAL_HEADING_DEG
 
     def _get_target_altitude(self) -> float:
+        """
+        Get the target altitude for the episode.
+        :return: the target altitude in feet
+        """
         return constants.INITIAL_ALTITUDE_FT
 
     def get_props_to_output(self) -> Tuple:
-        """Get properties to output for visualization and monitoring."""
+        """
+        Get properties to output for visualization and monitoring.
+        :return: tuple of properties to output
+        """
         return (
             prp.u_fps,
             prp.altitude_sl_ft,
@@ -488,11 +600,18 @@ class TurnHeadingControlTask(HeadingControlTask):
     """
 
     def get_initial_conditions(self) -> Dict[Property, float]:
+        """
+        Get initial conditions for the task.
+        :return: dict mapping initial condition Propertys to values
+        """
         initial_conditions = super().get_initial_conditions()
         random_heading = random.uniform(prp.heading_deg.min, prp.heading_deg.max)
         initial_conditions[prp.initial_heading_deg] = random_heading
         return initial_conditions
 
     def _get_target_track(self) -> float:
-        """Select a random heading for each episode."""
+        """
+        Select a random heading for each episode.
+        :return: the target track in degrees
+        """
         return random.uniform(self.target_track_deg.min, self.target_track_deg.max)

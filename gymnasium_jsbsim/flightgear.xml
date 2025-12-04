@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 FlightGear output configuration for JSBSim.
+
 Sends flight dynamics data via UDP to FlightGear for 3D visualization.
 
 For usage instructions, see docs/FLIGHTGEAR_INTEGRATION.md

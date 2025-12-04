@@ -176,7 +176,8 @@ class TestSimulation(unittest.TestCase):
         Let's confirm that we can launch multiple processes each with 1 instance.
         """
         processes = 4
-        with multiprocessing.Pool(processes) as pool:
+        ctx = multiprocessing.get_context("spawn")
+        with ctx.Pool(processes) as pool:
             # N.B. basic_task is a top level function that inits JSBSim
             future_results = [pool.apply_async(basic_task) for _ in range(processes)]
             results = [f.get() for f in future_results]

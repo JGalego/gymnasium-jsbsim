@@ -27,20 +27,19 @@ class Simulation:
         root_dir: Optional[str] = None,
     ):
         """
-        Creates and initialises a JSBSim simulation instance.
+        Creates and initializes a JSBSim simulation instance.
 
         Args:
             sim_frequency_hz: the JSBSim integration frequency in Hz.
             aircraft: Aircraft instance to be loaded.
             init_conditions: dict mapping properties to their initial values.
-                Defaults to None, causing a default set of initial props to be used.
+                Defaults to `None, causing a default set of initial props to be used.
             allow_flightgear_output: bool, loads a config file instructing
                 JSBSim to connect to an output socket if True.
             root_dir: JSBSim root directory path
         """
         if init_conditions is None:
             init_conditions = {}
-        # JSBSim FGFDMExec constructor - root_dir can be None (uses default)
         self.jsbsim = jsbsim.FGFDMExec(root_dir)  # type: ignore[call-arg]
         self.jsbsim.set_debug_level(0)
         if allow_flightgear_output:
@@ -65,6 +64,8 @@ class Simulation:
         :param prop: BoundedProperty, the property to be retrieved
         :return: float
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         return self.jsbsim[prop.name]
 
     def __setitem__(
@@ -84,6 +85,8 @@ class Simulation:
         :param prop: BoundedProperty, the property to be retrieved
         :param value: object?, the value to be set
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         self.jsbsim[prop.name] = value
 
     def load_model(self, model_name: str) -> None:
@@ -95,6 +98,8 @@ class Simulation:
 
         :param model_name: string, the aircraft name
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         load_success = self.jsbsim.load_model(model_name)
 
         if not load_success:
@@ -116,6 +121,8 @@ class Simulation:
             string, the name of the aircraft model if one is loaded, or
             None if no model is loaded.
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         name: str = self.jsbsim.get_model_name()
         if name:
             return name
@@ -129,6 +136,8 @@ class Simulation:
         Returns:
             Current simulation time in seconds
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         return self.jsbsim["simulation/sim-time-sec"]
 
     def initialise(
@@ -151,10 +160,13 @@ class Simulation:
             init_conditions: dict mapping properties to their initial values
         """
         if init_conditions:
-            # if we are specifying conditions, load a minimal file
+            # If we are specifying conditions, load a minimal file
             ic_file = "minimal_ic.xml"
         else:
             ic_file = "basic_ic.xml"
+
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
 
         ic_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ic_file)
         self.jsbsim.load_ic(ic_path, useAircraftPath=False)
@@ -195,6 +207,8 @@ class Simulation:
 
         :param init_conditions: dict mapping properties to their initial values
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         self.set_custom_initial_conditions(init_conditions=init_conditions)
         no_output_reset_mode = 0
         self.jsbsim.reset_to_initial_conditions(no_output_reset_mode)
@@ -204,11 +218,13 @@ class Simulation:
         Advances the simulation by one timestep.
 
         JSBSim monitors the simulation and detects whether it thinks it should
-        end, e.g. because a simulation time was specified. False is returned
-        if JSBSim termination criteria are met.
+        end, e.g. because a simulation time was specified.
 
-        :return: bool, False if sim has met JSBSim termination criteria else True.
+        :return: bool, `False` if the simulation has met JSBSim termination
+            criteria else `True`.
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         result = self.jsbsim.run()
         if self.wall_clock_dt is not None:
             time.sleep(self.wall_clock_dt)
@@ -218,12 +234,16 @@ class Simulation:
         """
         Enables output from the FlightGear simulator.
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         self.jsbsim.enable_output()
 
     def disable_flightgear_output(self):
         """
         Disables output from the FlightGear simulator.
         """
+        if self.jsbsim is None:
+            raise RuntimeError("JSBSim simulator is not initialized.")
         self.jsbsim.disable_output()
 
     def close(self):
@@ -237,16 +257,16 @@ class Simulation:
         """
         Sets the simulation speed relative to realtime.
 
-        The simulation runs at realtime for time_factor = 1. It runs at double
-        speed for time_factor=2, and half speed for 0.5.
+        The simulation runs at realtime for `time_factor=1`. It runs at double
+        speed for `time_factor=2`, and half speed for `0.5`.
 
         :param time_factor: int or float, nonzero, sim speed relative to realtime
-            if None, the simulation is run at maximum computational speed
+            if `None`, the simulation is run at maximum computational speed
         """
         if time_factor is None:
             self.wall_clock_dt = None
         elif time_factor <= 0:
-            raise ValueError("time factor must be positive and non-zero")
+            raise ValueError("Time factor must be positive and non-zero")
         else:
             self.wall_clock_dt = self.sim_dt / time_factor
 
@@ -270,7 +290,7 @@ class Simulation:
             self[prp.throttle_1_cmd] = throttle_cmd
             self[prp.mixture_1_cmd] = mixture_cmd
         except KeyError:
-            pass  # must be single-control aircraft
+            pass  # Must be single-control aircraft
 
     def raise_landing_gear(self):
         """

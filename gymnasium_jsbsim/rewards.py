@@ -22,13 +22,13 @@ else:
 
 class Reward:
     """
-    Immutable class storing an RL reward.
+    Immutable class representing the reward obtained at a timestep.
 
     We decompose rewards into tuples of component values, reflecting contributions
     from different goals. Separate tuples are maintained for the assessment (non-shaping)
     components and the shaping components. It is intended that the
 
-    Scalar reward values are retrieved by calling .reward() or non_shaping_reward().
+    Scalar reward values are retrieved by calling `agent_reward()` or `assessment_reward()`.
     The scalar value is the mean of the components.
     """
 
@@ -40,7 +40,7 @@ class Reward:
 
     def agent_reward(self) -> float:
         """
-        Returns scalar reward value by taking mean of all reward elements.
+        Returns scalar reward value by taking the mean of all reward elements.
 
         Returns:
             Mean of all reward components (base + shaping)
@@ -52,15 +52,20 @@ class Reward:
         return sum_reward / num_reward_components
 
     def assessment_reward(self) -> float:
-        """Returns scalar non-shaping reward by taking mean of base reward elements."""
+        """
+        Returns scalar non-shaping reward by taking mean of base reward elements.
+
+        Returns:
+            Mean of base (non-shaping) reward components
+        """
         return sum(self.base_reward_elements) / len(self.base_reward_elements)
 
     def is_shaping(self):
         """
-        Check if this reward includes shaping components.
+        Checks if this reward includes shaping components.
 
         Returns:
-            True if shaping components are present, False otherwise
+            `True` if shaping components are present, `False` otherwise
         """
         return bool(self.shaping_reward_elements)
 
@@ -89,7 +94,7 @@ class RewardComponent(ABC):
 
 class NormalisedComponent(RewardComponent, ABC):
     """
-    Base implementation of a RewardComponent implementing common methods.
+    Base implementation of `RewardComponent` for components that normalise errors.
 
     All potentials of subclasses should be normalised in [0.0, 1.0]
     """
@@ -103,16 +108,16 @@ class NormalisedComponent(RewardComponent, ABC):
         potential_difference_based: bool,
     ):
         """
-        Constructor.
+        Initializes NormalisedComponent with property, target, and potential type.
 
         :param name: the uniquely identifying name of this component
-        :param prop: the BoundedProperty for which a value will be retrieved
+        :param prop: the `BoundedProperty` for which a value will be retrieved
             from the State
         :param state_variables: the state variables corresponding to each State element
             that this component will be passed.
-        :param is_potential_based: True if reward is based on a potential difference
-            between prev_state and state (AKA potential based shaping reward) else
-            False (and reward depends only on the potential of current state).
+        :param potential_difference_based: `True` if reward is based on a potential difference
+            between `prev_state` and `state` (AKA potential-based shaping reward) else
+            `False` (and reward depends only on the potential of current state).
         """
         self.name = name
         self.state_index_of_value = state_variables.index(prop)
@@ -125,10 +130,10 @@ class NormalisedComponent(RewardComponent, ABC):
         state_variables: Tuple[prp.BoundedProperty, ...],
     ) -> None:
         """
-        Sets the target value or an index for retrieving it from States
+        Sets the target value or target index based on input type.
 
         Depending on how target is specified, it may either be a constant, or a
-        Property's value that needs to be retrieved from the State.
+        `Property`'s value that needs to be retrieved from the State.
         """
         if isinstance(target, (float, int)):
             self.constant_target = True
@@ -138,18 +143,18 @@ class NormalisedComponent(RewardComponent, ABC):
             self.target_index = state_variables.index(target)
 
     # prev_state is clearer than last_state
-    def calculate(self, state: State, prev_state: State, is_terminal: bool):
+    def calculate(self, state: State, last_state: State, is_terminal: bool):
         """
-        Calculates the value of this RewardComponent.
+        Calculates the value of this `RewardComponent`.
 
         If this component is potential difference based, its value is the
-        difference in potentials between prev_state and state. Otherwise its
+        difference in potentials between last_state and state. Otherwise its
         value is the potential of state.
         """
         if self.potential_difference_based:
-            # Reward is a potential difference of state, prev_state
+            # Reward is a potential difference of state, last_state
             reward = self.get_potential(state, is_terminal) - self.get_potential(
-                prev_state, False
+                last_state, False
             )
         else:
             reward = self.get_potential(state, is_terminal)
@@ -160,9 +165,15 @@ class NormalisedComponent(RewardComponent, ABC):
         return self.constant_target
 
     def get_name(self) -> str:
+        """
+        Returns the name of this `RewardComponent`.
+        """
         return self.name
 
     def is_potential_difference_based(self) -> bool:
+        """
+        Checks if this component uses potential-based difference calculation.
+        """
         return self.potential_difference_based
 
 
@@ -189,7 +200,7 @@ class ErrorComponent(NormalisedComponent, ABC):
         if self.is_constant_target():
             target = self.target
         else:
-            # else we have to look it up from the state
+            # Else we have to look it up in the state
             target = state[self.target_index]
         value = state[self.state_index_of_value]
         error = abs(value - target)
@@ -198,7 +209,7 @@ class ErrorComponent(NormalisedComponent, ABC):
     @abstractmethod
     def _normalise_error(self, absolute_error: float) -> float:
         """
-        Given an error in the interval [0, +inf], returns a normalised error in [0, 1]
+        Given an error in the interval [0, +inf], returns a normalised error in [0, 1].
 
         The normalised error asymptotically approaches 1 as absolute_error -> +inf.
 
@@ -224,7 +235,7 @@ class AsymptoticErrorComponent(ErrorComponent):
         scaling_factor: Union[float, int],
     ):
         """
-        Constructor.
+        Initializes `AsymptoticErrorComponent` with scaling factor.
 
         :param scaling_factor: the property value is scaled down by this amount.
             Shaping potential is at 0.5 when the error equals this factor.
@@ -248,18 +259,17 @@ class AngularAsymptoticErrorComponent(AsymptoticErrorComponent):
     (-180, 180] before processing.
     """
 
-    # angular_error is clearer than absolute_error
-    def _normalise_error(self, angular_error: float):
+    def _normalise_error(self, absolute_error: float):
         """
         Given an angle off of a target direction in degrees, calculates a
-        normalised error in [0,1]. The angular error is firstly transformed
-        to interval [-180,180] to account for the fact the agent can turn
+        normalised error in `[0, 1]`. The angular error is firstly transformed
+        to interval `[-180, 180]` to account for the fact the agent can turn
         left or right to face the target.
 
-        :param angular_error: float, angle off target in degrees
-        :return: float, normalised error in [0,1]
+        :param absolute_error: float, angle off target in degrees
+        :return: float, normalised error in `[0, 1]`
         """
-        reduced_angle_error = abs(reduce_reflex_angle_deg(angular_error))
+        reduced_angle_error = abs(reduce_reflex_angle_deg(absolute_error))
         return super()._normalise_error(reduced_angle_error)
 
 
@@ -268,7 +278,7 @@ class LinearErrorComponent(ErrorComponent):
     A potential-based shaping reward component.
 
     Potential is based linearly on the size of the error between a property of
-    interest and its target. The error must be in the interval [0, scaling_factor].
+    interest and its target. The error must be in the interval `[0, scaling_factor]`.
     """
 
     def __init__(
@@ -296,16 +306,16 @@ class LinearErrorComponent(ErrorComponent):
 
 def normalise_error_asymptotic(absolute_error: float, scaling_factor: float) -> float:
     """
-    Given an error in the interval [0, +inf], returns a normalised error in [0, 1]
+    Given an error in the interval `[0, +inf]`, returns a normalised error in `[0, 1]`
 
-    The normalised error asymptotically approaches 1 as absolute_error -> +inf.
+    The normalised error asymptotically approaches 1 as `absolute_error -> +inf`.
 
     The parameter scaling_factor is used to scale for magnitude.
-    When absolute_error == scaling_factor, the normalised error is equal to 0.5
+    When `absolute_error == scaling_factor`, the normalised error is equal to 0.5
     """
     if absolute_error < 0:
         raise ValueError(
-            "Error to be normalised must be non-negative " f": {absolute_error}"
+            f"Error to be normalised must be non-negative: {absolute_error}"
         )
     scaled_error = absolute_error / scaling_factor
     return scaled_error / (scaled_error + 1)
@@ -313,9 +323,9 @@ def normalise_error_asymptotic(absolute_error: float, scaling_factor: float) -> 
 
 def normalise_error_linear(absolute_error: float, max_error: float) -> float:
     """
-    Given an absolute error in [0, max_error], linearly normalises error in [0, 1]
+    Given an absolute error in `[0, max_error]`, linearly normalises error in `[0, 1]`
 
-    If absolute_error exceeds max_error, it is capped back to max_error
+    If `absolute_error` exceeds `max_error`, it is capped back to `max_error`
     """
     if absolute_error < 0:
         raise ValueError(
@@ -327,7 +337,7 @@ def normalise_error_linear(absolute_error: float, max_error: float) -> float:
 
 
 class RewardStub(Reward):
-    """Test stub for Reward class."""
+    """Test stub for `Reward` class."""
 
     def __init__(self, agent_reward_value: float, assessment_reward_value: float):
         # Don't call parent __init__ since stub doesn't use base_reward_elements

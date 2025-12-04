@@ -30,7 +30,7 @@ class Assessor(ABC):
 
 class AssessorImpl(Assessor):
     """
-    Determines the Reward from a state transitions.
+    Basic implementation of Assessor interface.
 
     Initialised with RewardComponents which allow calculation of the base
     (policy-influencing) and shaping rewards (non-policy-influencing) rewards respectively.
@@ -43,6 +43,7 @@ class AssessorImpl(Assessor):
         positive_rewards: bool = False,
     ):
         """
+        Initialises the Assessor with given RewardComponents.
         :param base_components: RewardComponents from which Reward is to be calculated
         :param potential_based_components: RewardComponents from which a potential-based
             reward component is to be calculated from
@@ -54,19 +55,33 @@ class AssessorImpl(Assessor):
         self.potential_components = tuple(potential_based_components)
         self.positive_rewards = positive_rewards
         if not self.base_components:
-            raise ValueError("base reward components cannot be empty")
+            raise ValueError("Base reward components cannot be empty!")
         if any(cmp.is_potential_difference_based() for cmp in self.base_components):
             raise ValueError(
-                "base rewards must be non potential based in this implementation"
+                "Base rewards must be non-potential-based in this implementation!"
             )
-            # Because of the positive_rewards logic
-        if not all(
-            cmp.is_potential_difference_based() for cmp in self.potential_components
-        ):
-            warnings.warn("Potential component not is_potential_difference_based()")
+        non_potential_diff_components = [
+            cmp
+            for cmp in self.potential_components
+            if not cmp.is_potential_difference_based()
+        ]
+        if non_potential_diff_components:
+            component_names = [
+                getattr(cmp, "get_name", lambda: cmp.__class__.__name__)()
+                for cmp in non_potential_diff_components
+            ]
+            warnings.warn(
+                f"Some potential components are not potential-difference based: {component_names}"
+            )
 
     def assess(self, state: State, prev_state: State, is_terminal: bool) -> Reward:
-        """Calculates a Reward from the state transition."""
+        """
+        Calculates a Reward from the state transition.
+        :param state: the current State after transition
+        :param prev_state: the previous State before transition
+        :param is_terminal: whether the transition to state was terminal
+        :return: Reward object containing base and potential-based rewards
+        """
         return Reward(
             self._base_rewards(state, prev_state, is_terminal),
             self._potential_based_rewards(state, prev_state, is_terminal),
@@ -75,6 +90,13 @@ class AssessorImpl(Assessor):
     def _base_rewards(
         self, state: State, prev_state: State, is_terminal: bool
     ) -> Tuple[float, ...]:
+        """
+        Calculates base rewards from the state transition.
+        :param state: the current State after transition
+        :param prev_state: the previous State before transition
+        :param is_terminal: whether the transition to state was terminal
+        :return: tuple of base rewards, in same order as self.base_components
+        """
         cmp_values = (
             cmp.calculate(state, prev_state, is_terminal)
             for cmp in self.base_components
@@ -86,6 +108,14 @@ class AssessorImpl(Assessor):
     def _potential_based_rewards(
         self, state: State, last_state: State, is_terminal: bool
     ) -> Tuple[float, ...]:
+        """
+        Calculates potential-based rewards from the state transition.
+        :param state: the current State after transition
+        :param last_state: the previous State before transition
+        :param is_terminal: whether the transition to state was terminal
+        :return: tuple of potential-based rewards, in same order as
+            self.potential_components
+        """
         return tuple(
             cmp.calculate(state, last_state, is_terminal)
             for cmp in self.potential_components
@@ -115,6 +145,8 @@ class SequentialAssessor(AssessorImpl, ABC):
         positive_rewards: bool = False,
     ):
         """
+        Initialises the SequentialAssessor with given RewardComponents and
+        their dependencies.
         :param base_components: RewardComponents from which the non-shaping
             part of the Reward is to be calculated
         :param potential_components: ErrorComponents from which the shaping
@@ -152,20 +184,20 @@ class SequentialAssessor(AssessorImpl, ABC):
         return tuple(value - 1 for value in seq_values)
 
     def _potential_based_rewards(
-        self, state: State, prev_state: State, is_terminal: bool
+        self, state: State, last_state: State, is_terminal: bool
     ) -> Tuple[float, ...]:
         potentials = tuple(
             cmp.get_potential(state, is_terminal) for cmp in self.potential_components
         )
         prev_potentials = tuple(
-            cmp.get_potential(prev_state, False) for cmp in self.potential_components
+            cmp.get_potential(last_state, False) for cmp in self.potential_components
         )
 
         discounts = self._get_sequential_discounts(
             state, is_terminal, self.potential_components, self.potential_dependency_map
         )
         prev_discounts = self._get_sequential_discounts(
-            prev_state, False, self.potential_components, self.potential_dependency_map
+            last_state, False, self.potential_components, self.potential_dependency_map
         )
 
         seq_potentials = (p * d for p, d in zip(potentials, discounts))

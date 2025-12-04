@@ -46,7 +46,7 @@ class Property(collections.namedtuple("Property", ["name", "description"])):
         return utils.AttributeFormatter.translate(self.name)
 
 
-# position and attitude
+# Positions and attitudes
 altitude_sl_ft = BoundedProperty(
     "position/h-sl-ft", "altitude above mean sea level [ft]", -1400, 85000
 )
@@ -67,7 +67,7 @@ dist_travel_m = Property(
     "distance travelled from starting position [m]",
 )
 
-# velocities
+# Velocities
 u_fps = BoundedProperty(
     "velocities/u-fps", "body frame x-axis velocity [ft/s]", -2200, 2200
 )
@@ -97,7 +97,7 @@ r_radps = BoundedProperty(
 )
 altitude_rate_fps = Property("velocities/h-dot-fps", "Rate of altitude change [ft/s]")
 
-# controls state
+# Flight controls
 aileron_left = BoundedProperty(
     "fcs/left-aileron-pos-norm", "left aileron position, normalised", -1, 1
 )
@@ -113,14 +113,14 @@ throttle = BoundedProperty(
 )
 gear = BoundedProperty("gear/gear-pos-norm", "landing gear position, normalised", 0, 1)
 
-# engines
+# Propulsion / engines
 engine_running = Property("propulsion/engine/set-running", "engine running (0/1 bool)")
 all_engine_running = Property(
     "propulsion/set-running", "set engine running (-1 for all engines)"
 )
 engine_thrust_lbs = Property("propulsion/engine/thrust-lbs", "engine thrust [lb]")
 
-# controls command
+# Flight control commands
 aileron_cmd = BoundedProperty(
     "fcs/aileron-cmd-norm", "aileron commanded position, normalised", -1.0, 1.0
 )
@@ -146,11 +146,11 @@ gear_all_cmd = BoundedProperty(
     "gear/gear-cmd-norm", "all landing gear commanded position, normalised", 0, 1
 )
 
-# simulation
+# Simulation
 sim_dt = Property("simulation/dt", "JSBSim simulation timestep [s]")
 sim_time_s = Property("simulation/sim-time-sec", "Simulation time [s]")
 
-# initial conditions
+# Initial conditions
 initial_altitude_ft = Property("ic/h-sl-ft", "initial altitude MSL [ft]")
 initial_terrain_altitude_ft = Property(
     "ic/terrain-elevation-ft", "initial terrain alt [ft]"

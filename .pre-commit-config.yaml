@@ -34,3 +34,12 @@ repos:
     hooks:
       - id: mypy
         args: [--ignore-missing-imports, --check-untyped-defs]
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true

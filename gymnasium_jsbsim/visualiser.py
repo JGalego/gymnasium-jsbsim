@@ -1,4 +1,6 @@
-"""Module for visualisation of JSBSim simulations using FlightGear and Matplotlib."""
+"""
+Module for visualisation of JSBSim simulations using FlightGear and Matplotlib.
+"""
 
 import subprocess
 import time
@@ -15,7 +17,9 @@ from gymnasium_jsbsim.simulation import Simulation
 
 @dataclass
 class FlightGearConfig:
-    """Configuration for FlightGear performance and visual settings."""
+    """
+    Configuration for FlightGear performance and visual settings.
+    """
 
     # Performance settings
     enable_ai_traffic: bool = constants.FG_ENABLE_AI_TRAFFIC
@@ -36,12 +40,20 @@ class FlightGearConfig:
 
     @classmethod
     def performance_mode(cls) -> "FlightGearConfig":
-        """Create config optimized for performance (all features disabled)."""
+        """
+        Creates a config optimized for performance (all features disabled).
+
+        :return: FlightGearConfig with performance-optimized settings
+        """
         return cls()  # Uses defaults which are already optimized
 
     @classmethod
     def quality_mode(cls) -> "FlightGearConfig":
-        """Create config optimized for visual quality (most features enabled)."""
+        """
+        Creates a config optimized for visual quality (most features enabled).
+
+        :return: FlightGearConfig with quality-optimized settings
+        """
         return cls(
             enable_ai_traffic=False,  # Keep disabled for performance
             enable_real_weather=False,  # Keep disabled for consistency
@@ -75,16 +87,11 @@ class FigureVisualiser:
 
     def __init__(self, _: Simulation, print_props: Tuple[prp.Property]):
         """
-        Constructor.
-
-        Sets here is ft_per_deg_lon, which depends dynamically on aircraft's
-        longitude (because of the conversion between geographic and Euclidean
-        coordinate systems). We retrieve longitude from the simulation and
-        assume it is constant thereafter.
+        Initializes FigureVisualiser.
 
         :param _: (unused) Simulation that will be plotted
-        :param print_props: Propertys which will have their values printed to Figure.
-            Must be retrievable from the plotted Simulation.
+        :param print_props: properties which will have their values printed to Figure.
+            Must be retrievable from the plotted `Simulation` object.
         """
         self.print_props = print_props
         self.figure: Optional[plt.Figure] = None
@@ -95,7 +102,7 @@ class FigureVisualiser:
         """
         Creates or updates a 3D plot of the episode.
 
-        :param sim: Simulation that will be plotted
+        :param sim: Simulation to plot from
         """
         if not self.figure:
             self.figure, self.axes = self._plot_configure()
@@ -116,7 +123,7 @@ class FigureVisualiser:
         )  # Voodoo pause needed for figure to update
 
     def close(self):
-        """Clean up and close the figure."""
+        """Cleans up and closes the figure."""
         if self.figure:
             plt.close(self.figure)
             self.figure = None  # type: ignore[assignment]
@@ -126,9 +133,7 @@ class FigureVisualiser:
         """
         Creates a figure with subplots for states and actions.
 
-        :return: (figure, axes) where:
-            figure: a matplotlib Figure with subplots for state and controls
-            axes: an AxesTuple object with references to all figure subplot axes
+        :return: Tuple of (Figure, AxesTuple)
         """
         plt.ion()  # Interactive mode allows dynamic updating of plot
         figure = plt.figure(figsize=(6, 11))
@@ -291,9 +296,10 @@ class FlightGearVisualiser:
     """
     Class for visualising aircraft using the FlightGear simulator.
 
-    This visualiser launches FlightGear and (by default) waits for it to
-    launch. A Figure is also displayed (by creating its own FigureVisualiser)
-    which is used to display the agent's actions.
+    This visualiser launches FlightGear and waits for it to launch.
+
+    It then configures the JSBSim simulation to output data to FlightGear and
+    starts a FigureVisualiser to plot agent actions.
     """
 
     def __init__(
@@ -316,9 +322,10 @@ class FlightGearVisualiser:
         self.configure_simulation_output(sim)
         self.print_props = print_props
         self.config = config or FlightGearConfig.performance_mode()
-        # Note: subprocess is managed manually (not with context manager)
-        # Because it needs to stay alive for the visualiser's lifetime
-        # And is explicitly closed in close() method
+
+        # Note: subprocess is managed manually not with context manager
+        # because it needs to stay alive for the visualiser's lifetime
+        # and is explicitly closed in close() method
         self.flightgear_process = self._launch_flightgear(
             sim.get_aircraft(), self.config
         )
@@ -330,17 +337,22 @@ class FlightGearVisualiser:
     def plot(self, sim: Simulation) -> None:
         """
         Updates a 3D plot of agent actions.
+        :param sim: Simulation to plot from
         """
         self.figure.plot(sim)
 
     @staticmethod
     def _launch_flightgear(aircraft: Aircraft, config: FlightGearConfig):
-        """Launch FlightGear subprocess for visualization."""
+        """
+        Launches FlightGear subprocess for visualization.
+
+        :param aircraft: Aircraft to visualize
+        :param config: FlightGearConfig for performance/quality settings.
+        :return: subprocess.Popen object for the FlightGear process
+        """
         cmd_line_args = FlightGearVisualiser._create_cmd_line_args(
             aircraft.flightgear_id, config
         )
-        # Subprocess is not used with context manager because it needs to persist
-        # And is managed manually via close() method
 
         print("Launching FlightGear with command:")
         print(" ".join(cmd_line_args))
@@ -350,16 +362,26 @@ class FlightGearVisualiser:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
+
         return flightgear_process
 
     def configure_simulation_output(self, sim: Simulation):
-        """Configure simulation for FlightGear output."""
+        """
+        Configure simulation for FlightGear output.
+
+        :param sim: Simulation to configure
+        """
         sim.enable_flightgear_output()
         sim.set_simulation_time_factor(constants.FG_TIME_FACTOR)
 
     @staticmethod
     def _create_cmd_line_args(aircraft_id: str, config: FlightGearConfig):
-        """Create FlightGear command line arguments based on configuration."""
+        """
+        Create FlightGear command line arguments based on configuration.
+
+        :param aircraft_id: ID of the aircraft to visualize
+        :param config: FlightGearConfig for performance/quality settings.
+        """
         # FlightGear doesn't have a 172X model, use the P instead
         if aircraft_id == "c172x":
             aircraft_id = "c172p"
@@ -413,7 +435,7 @@ class FlightGearVisualiser:
         return tuple(args)
 
     def _block_until_flightgear_loaded(self):
-        """Wait until FlightGear has finished loading."""
+        """Waits until FlightGear has finished loading."""
         while True:
             msg_out = self.flightgear_process.stdout.readline().decode()
             if constants.FG_LOADED_MESSAGE in msg_out:
@@ -421,7 +443,7 @@ class FlightGearVisualiser:
             time.sleep(0.001)
 
     def close(self):
-        """Close FlightGear and figure visualiser."""
+        """Closes FlightGear and figure visualiser."""
         if self.flightgear_process:
             self.flightgear_process.kill()
             timeout_secs = 1
