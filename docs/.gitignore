@@ -1,1 +1,5 @@
-build/
+build/html/
+build/latex/
+build/epub/
+build/doctrees/
+markdown/.doctrees/

@@ -25,10 +25,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "sphinx_markdown_builder",
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = []  # type: ignore[var-annotated]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -71,3 +72,8 @@ intersphinx_mapping = {
 
 # Autosummary settings
 autosummary_generate = True
+
+# -- Options for Markdown output ---------------------------------------------
+
+# Markdown builder settings
+markdown_http_base = "https://github.com/JGalego/gymnasium-jsbsim"

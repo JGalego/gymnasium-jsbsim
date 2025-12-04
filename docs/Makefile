@@ -10,7 +10,12 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+.PHONY: help Makefile markdown
+
+# Build Markdown documentation
+markdown:
+	@$(SPHINXBUILD) -b markdown "$(SOURCEDIR)" "markdown" $(SPHINXOPTS) $(O)
+	@echo "Markdown documentation generated in markdown/"
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

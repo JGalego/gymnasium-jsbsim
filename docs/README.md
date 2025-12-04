@@ -20,6 +20,14 @@ make html
 
 The generated HTML files will be in `build/html/`. Open `build/html/index.html` in your browser to view the documentation.
 
+### Build Markdown Documentation
+
+```bash
+make markdown
+```
+
+The generated Markdown files will be in `markdown/` and are version-controlled. These are ideal for GitHub wikis or documentation platforms that support Markdown.
+
 ### Other Build Formats
 
 ```bash
@@ -40,7 +48,8 @@ make clean
 - `source/index.rst` - Documentation homepage
 - `source/modules.rst` - API reference
 - `source/_static/` - Static files (CSS, images, etc.)
-- `build/` - Generated documentation (gitignored)
+- `markdown/` - Generated Markdown docs (version-controlled)
+- `build/` - Generated HTML/PDF/EPUB docs (gitignored)
 
 ## Hosting on GitHub Pages
 
